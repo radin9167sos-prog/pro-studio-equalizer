@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Vocal Separator — جداساز هوشمند صدای خواننده و موزیک بی‌کلام</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="background-globes">
+        <div class="globe globe-1"></div>
+        <div class="globe globe-2"></div>
+        <div class="globe globe-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-badge">
+                <span class="logo-icon">🎧</span>
+                <span class="logo-title">AI VOCAL SEPARATOR</span>
+            </div>
+            <h1>جداساز هوشمند صدای خواننده و بیت موزیک</h1>
+            <p class="subtitle">فایل آهنگ خود را انتخاب کنید، صدای خواننده و موسیقی بی‌کلام (کارائوکه) را با دقت بالا جدا و دانلود کنید</p>
+        </header>
+
+        <!-- Drop Zone Card -->
+        <div class="card drop-card" id="dropZone">
+            <input type="file" id="audioInput" accept="audio/*" class="file-input-hidden">
+            <div class="drop-content">
+                <div class="drop-icon-pulse">🎵</div>
+                <div class="drop-title">فایل صوتی خود را بکشید و اینجا رها کنید</div>
+                <div class="drop-sub">یا برای انتخاب فایل کلیک کنید (پشتیبانی از MP3, WAV, OGG, FLAC, M4A)</div>
+                <button class="btn-primary btn-select" id="btnSelectFile">📂 انتخاب آهنگ از سیستم</button>
+            </div>
+        </div>
+
+        <!-- Loaded Audio Info Card (Hidden Initially) -->
+        <div class="card audio-info-card hidden" id="audioInfoCard">
+            <div class="track-header">
+                <div class="track-icon">🎶</div>
+                <div class="track-meta">
+                    <div class="track-name" id="trackName">Song_Title.mp3</div>
+                    <div class="track-details" id="trackDetails">44.1 kHz | 16-bit | 03:45</div>
+                </div>
+                <button class="btn-secondary" id="btnChangeFile">🔄 تغییر آهنگ</button>
+            </div>
+
+            <!-- Real-time Audio Spectrum & Waveform Visualizer -->
+            <div class="visualizer-box">
+                <canvas id="spectrumCanvas" width="800" height="140"></canvas>
+                <div class="vis-badges">
+                    <span class="vis-badge badge-vocal">🎤 کلام (Vocals)</span>
+                    <span class="vis-badge badge-music">🎸 بی‌کلام (Music)</span>
+                </div>
+            </div>
+
+            <!-- Player Timeline Controls -->
+            <div class="timeline-container">
+                <span class="time-display" id="timeCurrent">00:00</span>
+                <input type="range" class="timeline-slider" id="timelineSlider" min="0" max="100" value="0" step="0.1">
+                <span class="time-display" id="timeTotal">00:00</span>
+            </div>
+
+            <div class="player-controls-row">
+                <button class="btn-play" id="btnPlayPause">▶️ پخش</button>
+                <button class="btn-secondary" id="btnStop">⏹️ توقف</button>
+            </div>
+
+            <!-- Preset Buttons -->
+            <div class="preset-buttons-grid">
+                <button class="preset-btn active" data-mode="MIX">🎛️ ترکیبی (Original Mix)</button>
+                <button class="preset-btn" data-mode="VOCALS">🎤 فقط صدای خواننده (Vocals Only)</button>
+                <button class="preset-btn" data-mode="MUSIC">🎵 موزیک بی‌کلام / کارائوکه (Music Only)</button>
+            </div>
+
+            <!-- Dual Volume Mix Sliders -->
+            <div class="mix-sliders-grid">
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">🎤 ولوم صدای خواننده (Vocals)</span>
+                        <span class="slider-value" id="valVocalVol">100%</span>
+                    </div>
+                    <input type="range" id="sliderVocalVol" class="app-slider slider-cyan" min="0" max="150" value="100">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">🎸 ولوم موزیک بی‌کلام (Instrumental)</span>
+                        <span class="slider-value" id="valMusicVol">100%</span>
+                    </div>
+                    <input type="range" id="sliderMusicVol" class="app-slider slider-purple" min="0" max="150" value="100">
+                </div>
+            </div>
+
+            <!-- Advanced Equalizer & DSP Tuning -->
+            <div class="dsp-tuning-box">
+                <div class="dsp-title">⚙️ فیلترهای پیشرفته جداسازی فرکانسی</div>
+                <div class="dsp-grid">
+                    <div class="dsp-item">
+                        <span class="dsp-label">قدرت فیلتر فرکانس کات کلام</span>
+                        <input type="range" id="sliderFormantFilter" class="app-slider" min="300" max="4000" value="1800">
+                        <span class="dsp-val" id="valFormantFilter">1800 Hz</span>
+                    </div>
+                    <div class="dsp-item">
+                        <span class="dsp-label">بیس و ساب‌بیس موزیک (Sub-Bass)</span>
+                        <input type="range" id="sliderBassBoost" class="app-slider" min="0" max="12" value="4">
+                        <span class="dsp-val" id="valBassBoost">+4 dB</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Buttons Section -->
+            <div class="export-section">
+                <div class="export-title">💾 دانلود فایل‌های جدا شده (خروجی باکیفیت WAV)</div>
+                <div class="export-buttons-row">
+                    <button class="btn-export btn-export-vocals" id="btnExportVocals">
+                        <span>🎤</span> دانلود صدای خواننده (Vocals WAV)
+                    </button>
+                    <button class="btn-export btn-export-music" id="btnExportMusic">
+                        <span>🎵</span> دانلود موزیک بی‌کلام (Instrumental WAV)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>موتور جداسازی صوتی Web Audio API | ۱۰۰٪ آفلاین و بدون نیاز به اینترنت</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
