@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Vocal Separator — جداساز هوشمند صدای خواننده و موزیک بی‌کلام</title>
+    <title>PRO STUDIO EQUALIZER — اکولایزر ۱۰ بانده گرافیکی و پردازشگر صوت فوق حرفه‌ای</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -19,45 +19,47 @@
         <!-- Header -->
         <header class="app-header">
             <div class="logo-badge">
-                <span class="logo-icon">🎧</span>
-                <span class="logo-title">AI VOCAL SEPARATOR</span>
+                <span class="logo-icon">🎛️</span>
+                <span class="logo-title">PRO STUDIO EQUALIZER & AUDIO PROCESSOR</span>
             </div>
-            <h1>جداساز هوشمند صدای خواننده و بیت موزیک</h1>
-            <p class="subtitle">فایل آهنگ خود را انتخاب کنید، صدای خواننده و موسیقی بی‌کلام (کارائوکه) را با دقت بالا جدا و دانلود کنید</p>
+            <h1>اکولایزر ۱۰ بانده گرافیکی و پردازشگر صوت استودیویی</h1>
+            <p class="subtitle">فایل موزیک خود را بارگذاری کنید، فرکانس‌ها را تنطیم کنید، صدای خواننده و بیس را جدا کنید و خروجی باکیفیت دانلود کنید</p>
         </header>
 
         <!-- Drop Zone Card -->
         <div class="card drop-card" id="dropZone">
             <input type="file" id="audioInput" accept="audio/*" class="file-input-hidden">
             <div class="drop-content">
-                <div class="drop-icon-pulse">🎵</div>
-                <div class="drop-title">فایل صوتی خود را بکشید و اینجا رها کنید</div>
+                <div class="drop-icon-pulse">🎚️</div>
+                <div class="drop-title">فایل موزیک خود را بکشید و اینجا رها کنید</div>
                 <div class="drop-sub">یا برای انتخاب فایل کلیک کنید (پشتیبانی از MP3, WAV, OGG, FLAC, M4A)</div>
-                <button class="btn-primary btn-select" id="btnSelectFile">📂 انتخاب آهنگ از سیستم</button>
+                <button class="btn-primary btn-select" id="btnSelectFile">📂 انتخاب موزیک از سیستم</button>
             </div>
         </div>
 
-        <!-- Loaded Audio Info Card (Hidden Initially) -->
+        <!-- Loaded Audio Studio Dashboard (Hidden Initially) -->
         <div class="card audio-info-card hidden" id="audioInfoCard">
+            <!-- Track Meta Header -->
             <div class="track-header">
-                <div class="track-icon">🎶</div>
+                <div class="track-icon">🎧</div>
                 <div class="track-meta">
                     <div class="track-name" id="trackName">Song_Title.mp3</div>
                     <div class="track-details" id="trackDetails">44.1 kHz | 16-bit | 03:45</div>
                 </div>
-                <button class="btn-secondary" id="btnChangeFile">🔄 تغییر آهنگ</button>
+                <button class="btn-secondary" id="btnChangeFile">🔄 تغییر موزیک</button>
             </div>
 
-            <!-- Real-time Audio Spectrum & Waveform Visualizer -->
+            <!-- Dynamic Audio Spectrum & Waveform Visualizer -->
             <div class="visualizer-box">
-                <canvas id="spectrumCanvas" width="800" height="140"></canvas>
-                <div class="vis-badges">
-                    <span class="vis-badge badge-vocal">🎤 کلام (Vocals)</span>
-                    <span class="vis-badge badge-music">🎸 بی‌کلام (Music)</span>
+                <canvas id="spectrumCanvas" width="800" height="160"></canvas>
+                <div class="vis-mode-selector">
+                    <button class="vis-mode-btn active" data-vis-mode="SPECTRUM">📊 3D Spectrum</button>
+                    <button class="vis-mode-btn" data-vis-mode="WAVEFORM">🌊 Waveform</button>
+                    <button class="vis-mode-btn" data-vis-mode="CIRCLE">⭕ DJ Circle</button>
                 </div>
             </div>
 
-            <!-- Player Timeline Controls -->
+            <!-- Timeline Player Controls -->
             <div class="timeline-container">
                 <span class="time-display" id="timeCurrent">00:00</span>
                 <input type="range" class="timeline-slider" id="timelineSlider" min="0" max="100" value="0" step="0.1">
@@ -65,69 +67,159 @@
             </div>
 
             <div class="player-controls-row">
-                <button class="btn-play" id="btnPlayPause">▶️ پخش</button>
+                <button class="btn-play" id="btnPlayPause">▶️ پخش موزیک</button>
                 <button class="btn-secondary" id="btnStop">⏹️ توقف</button>
             </div>
 
-            <!-- Preset Buttons -->
-            <div class="preset-buttons-grid">
-                <button class="preset-btn active" data-mode="MIX">🎛️ ترکیبی (Original Mix)</button>
-                <button class="preset-btn" data-mode="VOCALS">🎤 فقط صدای خواننده (Vocals Only)</button>
-                <button class="preset-btn" data-mode="MUSIC">🎵 موزیک بی‌کلام / کارائوکه (Music Only)</button>
-            </div>
-
-            <!-- Dual Volume Mix Sliders -->
-            <div class="mix-sliders-grid">
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span class="slider-label">🎤 ولوم صدای خواننده (Vocals)</span>
-                        <span class="slider-value" id="valVocalVol">100%</span>
-                    </div>
-                    <input type="range" id="sliderVocalVol" class="app-slider slider-cyan" min="0" max="150" value="100">
+            <!-- PRO 10-BAND GRAPHIC EQUALIZER SECTION -->
+            <div class="eq-section">
+                <div class="eq-header">
+                    <div class="eq-title">🎚️ اکولایزر ۱۰ بانده گرافیکی استودیویی (10-Band Graphic EQ)</div>
+                    <button class="btn-secondary btn-reset-eq" id="btnResetEQ">🔄 بازنشانی EQ</button>
                 </div>
 
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span class="slider-label">🎸 ولوم موزیک بی‌کلام (Instrumental)</span>
-                        <span class="slider-value" id="valMusicVol">100%</span>
+                <!-- EQ Presets Bar -->
+                <div class="eq-presets-grid">
+                    <button class="eq-preset-btn active" data-eq-preset="FLAT">🎧 فابریک (Flat)</button>
+                    <button class="eq-preset-btn" data-eq-preset="BASS_BOOST">💥 شوتی بیس (Bass Boost)</button>
+                    <button class="eq-preset-btn" data-eq-preset="VOCAL_BOOST">🎤 صدای خواننده (Vocal)</button>
+                    <button class="eq-preset-btn" data-eq-preset="POP_DANCE">💃 پاپ و دیسکو (Pop/Dance)</button>
+                    <button class="eq-preset-btn" data-eq-preset="ROCK">🎸 راک و گیتار (Rock)</button>
+                    <button class="eq-preset-btn" data-eq-preset="HIFI">⚡ کریستالی (Hi-Fi Clarity)</button>
+                </div>
+
+                <!-- 10 Vertical Faders Grid -->
+                <div class="eq-faders-container">
+                    <!-- Band 1: 32Hz -->
+                    <div class="eq-fader-col">
+                        <span class="fader-val" id="eq-val-0">0 dB</span>
+                        <input type="range" class="eq-fader" id="eq-band-0" data-band-idx="0" min="-12" max="12" step="0.5" value="0" orient="vertical">
+                        <span class="fader-label">32 Hz</span>
+                        <span class="fader-sub">Sub-Bass</span>
                     </div>
-                    <input type="range" id="sliderMusicVol" class="app-slider slider-purple" min="0" max="150" value="100">
+                    <!-- Band 2: 64Hz -->
+                    <div class="eq-fader-col">
+                        <span class="fader-val" id="eq-val-1">0 dB</span>
+                        <input type="range" class="eq-fader" id="eq-band-1" data-band-idx="1" min="-12" max="12" step="0.5" value="0" orient="vertical">
+                        <span class="fader-label">64 Hz</span>
+                        <span class="fader-sub">Bass</span>
+                    </div>
+                    <!-- Band 3: 125Hz -->
+                    <div class="eq-fader-col">
+                        <span class="fader-val" id="eq-val-2">0 dB</span>
+                        <input type="range" class="eq-fader" id="eq-band-2" data-band-idx="2" min="-12" max="12" step="0.5" value="0" orient="vertical">
+                        <span class="fader-label">125 Hz</span>
+                        <span class="fader-sub">Punch</span>
+                    </div>
+                    <!-- Band 4: 250Hz -->
+                    <div class="eq-fader-col">
+                        <span class="fader-val" id="eq-val-3">0 dB</span>
+                        <input type="range" class="eq-fader" id="eq-band-3" data-band-idx="3" min="-12" max="12" step="0.5" value="0" orient="vertical">
+                        <span class="fader-label">250 Hz</span>
+                        <span class="fader-sub">Low-Mid</span>
+                    </div>
+                    <!-- Band 5: 500Hz -->
+                    <div class="eq-fader-col">
+                        <span class="fader-val" id="eq-val-4">0 dB</span>
+                        <input type="range" class="eq-fader" id="eq-band-4" data-band-idx="4" min="-12" max="12" step="0.5" value="0" orient="vertical">
+                        <span class="fader-label">500 Hz</span>
+                        <span class="fader-sub">Mid</span>
+                    </div>
+                    <!-- Band 6: 1kHz -->
+                    <div class="eq-fader-col">
+                        <span class="fader-val" id="eq-val-5">0 dB</span>
+                        <input type="range" class="eq-fader" id="eq-band-5" data-band-idx="5" min="-12" max="12" step="0.5" value="0" orient="vertical">
+                        <span class="fader-label">1 kHz</span>
+                        <span class="fader-sub">Upper-Mid</span>
+                    </div>
+                    <!-- Band 7: 2kHz -->
+                    <div class="eq-fader-col">
+                        <span class="fader-val" id="eq-val-6">0 dB</span>
+                        <input type="range" class="eq-fader" id="eq-band-6" data-band-idx="6" min="-12" max="12" step="0.5" value="0" orient="vertical">
+                        <span class="fader-label">2 kHz</span>
+                        <span class="fader-sub">Presence</span>
+                    </div>
+                    <!-- Band 8: 4kHz -->
+                    <div class="eq-fader-col">
+                        <span class="fader-val" id="eq-val-7">0 dB</span>
+                        <input type="range" class="eq-fader" id="eq-band-7" data-band-idx="7" min="-12" max="12" step="0.5" value="0" orient="vertical">
+                        <span class="fader-label">4 kHz</span>
+                        <span class="fader-sub">Clarity</span>
+                    </div>
+                    <!-- Band 9: 8kHz -->
+                    <div class="eq-fader-col">
+                        <span class="fader-val" id="eq-val-8">0 dB</span>
+                        <input type="range" class="eq-fader" id="eq-band-8" data-band-idx="8" min="-12" max="12" step="0.5" value="0" orient="vertical">
+                        <span class="fader-label">8 kHz</span>
+                        <span class="fader-sub">Treble</span>
+                    </div>
+                    <!-- Band 10: 16kHz -->
+                    <div class="eq-fader-col">
+                        <span class="fader-val" id="eq-val-9">0 dB</span>
+                        <input type="range" class="eq-fader" id="eq-band-9" data-band-idx="9" min="-12" max="12" step="0.5" value="0" orient="vertical">
+                        <span class="fader-label">16 kHz</span>
+                        <span class="fader-sub">Air</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Advanced Equalizer & DSP Tuning -->
-            <div class="dsp-tuning-box">
-                <div class="dsp-title">⚙️ فیلترهای پیشرفته جداسازی فرکانسی</div>
-                <div class="dsp-grid">
-                    <div class="dsp-item">
-                        <span class="dsp-label">قدرت فیلتر فرکانس کات کلام</span>
-                        <input type="range" id="sliderFormantFilter" class="app-slider" min="300" max="4000" value="1800">
-                        <span class="dsp-val" id="valFormantFilter">1800 Hz</span>
+            <!-- STUDIO AUDIO PROCESSOR & EFFECTS -->
+            <div class="processor-section">
+                <div class="processor-title">⚡ افکت‌های استودیویی و پردازشگر صوت</div>
+                <div class="processor-grid">
+                    <div class="proc-card">
+                        <div class="proc-header">
+                            <span class="proc-label">🔊 ولوم پری‌امپ (Pre-Amp Gain)</span>
+                            <span class="proc-val" id="valPreAmp">0 dB</span>
+                        </div>
+                        <input type="range" id="sliderPreAmp" class="app-slider slider-cyan" min="-6" max="12" value="0" step="0.5">
                     </div>
-                    <div class="dsp-item">
-                        <span class="dsp-label">بیس و ساب‌بیس موزیک (Sub-Bass)</span>
-                        <input type="range" id="sliderBassBoost" class="app-slider" min="0" max="12" value="4">
-                        <span class="dsp-val" id="valBassBoost">+4 dB</span>
+
+                    <div class="proc-card">
+                        <div class="proc-header">
+                            <span class="proc-label">🌐 صدای سه‌بعدی و فراگیر (3D Stereo Width)</span>
+                            <span class="proc-val" id="valStereoWidth">100%</span>
+                        </div>
+                        <input type="range" id="sliderStereoWidth" class="app-slider slider-purple" min="0" max="200" value="100">
+                    </div>
+
+                    <div class="proc-card">
+                        <div class="proc-header">
+                            <span class="proc-label">🎤 ولوم صدای خواننده (Vocals Demux)</span>
+                            <span class="proc-val" id="valVocalVol">100%</span>
+                        </div>
+                        <input type="range" id="sliderVocalVol" class="app-slider slider-cyan" min="0" max="150" value="100">
+                    </div>
+
+                    <div class="proc-card">
+                        <div class="proc-header">
+                            <span class="proc-label">🎸 ولوم موزیک بی‌کلام (Instrumental)</span>
+                            <span class="proc-val" id="valMusicVol">100%</span>
+                        </div>
+                        <input type="range" id="sliderMusicVol" class="app-slider slider-purple" min="0" max="150" value="100">
                     </div>
                 </div>
             </div>
 
-            <!-- Export Buttons Section -->
+            <!-- EXPORT SECTION -->
             <div class="export-section">
-                <div class="export-title">💾 دانلود فایل‌های جدا شده (خروجی باکیفیت WAV)</div>
+                <div class="export-title">💾 دانلود خروجی اکولایزه شده (Processed WAV Export)</div>
                 <div class="export-buttons-row">
+                    <button class="btn-export btn-export-eq" id="btnExportEQ">
+                        <span>🎛️</span> دانلود موزیک اکولایزه شده (Equalized WAV)
+                    </button>
                     <button class="btn-export btn-export-vocals" id="btnExportVocals">
-                        <span>🎤</span> دانلود صدای خواننده (Vocals WAV)
+                        <span>🎤</span> دانلود صدای خواننده (Vocals Only)
                     </button>
                     <button class="btn-export btn-export-music" id="btnExportMusic">
-                        <span>🎵</span> دانلود موزیک بی‌کلام (Instrumental WAV)
+                        <span>🎵</span> دانلود موزیک بی‌کلام (Instrumental Only)
                     </button>
                 </div>
             </div>
         </div>
 
         <footer>
-            <p>موتور جداسازی صوتی Web Audio API | ۱۰۰٪ آفلاین و بدون نیاز به اینترنت</p>
+            <p>موتور اکولایزر و پردازشگر صوت استودیویی Web Audio API | ۱۰۰٪ آفلاین و بدون نیاز به اینترنت</p>
         </footer>
     </div>
 

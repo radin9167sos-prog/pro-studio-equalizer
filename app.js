@@ -1,11 +1,11 @@
 /*
  * ===================================================================
- * AI VOCAL SEPARATOR — CLIENT-SIDE DSP & WEB AUDIO SEPARATION ENGINE
- * 100% Offline Audio Stem Demuxing, Waveform Visualization & WAV Export
+ * PRO STUDIO EQUALIZER — WEB AUDIO 10-BAND EQ & DSP PROCESSOR ENGINE
+ * Real-time BiquadFilter Nodes, Visualizers & Offline WAV Exporter
  * ===================================================================
  */
 
-class VocalSeparatorApp {
+class EqualizerApp {
     constructor() {
         this.audioCtx = null;
         this.rawAudioBuffer = null;
@@ -14,6 +14,8 @@ class VocalSeparatorApp {
 
         this.vocalSource = null;
         this.musicSource = null;
+        this.preAmpNode = null;
+        this.eqNodes = [];
         this.vocalGain = null;
         this.musicGain = null;
         this.analyser = null;
@@ -24,7 +26,22 @@ class VocalSeparatorApp {
         this.audioDuration = 0;
         this.fileName = 'Track';
 
-        this.mode = 'MIX'; // MIX, VOCALS, MUSIC
+        // 10 Frequencies for Graphic Equalizer Bands (Hz)
+        this.EQ_FREQUENCIES = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+        this.eqGains = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // Default flat gains (dB)
+        this.preAmpGainDb = 0;
+
+        // Equalizer Presets
+        this.EQ_PRESETS = {
+            FLAT:        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            BASS_BOOST:  [9, 11, 8, 4, 1, 0, 1, 2, 3, 4],
+            VOCAL_BOOST: [-3, -2, 0, 2, 6, 8, 6, 3, 1, 0],
+            POP_DANCE:   [5, 7, 4, 1, -1, 1, 3, 5, 7, 6],
+            ROCK:        [7, 5, 3, 1, -1, 1, 3, 5, 7, 9],
+            HIFI:        [4, 3, 1, 0, 0, 1, 3, 6, 9, 11]
+        };
+
+        this.visMode = 'SPECTRUM'; // SPECTRUM, WAVEFORM, CIRCLE
 
         this.initDOM();
         this.bindEvents();
@@ -49,17 +66,16 @@ class VocalSeparatorApp {
 
         this.btnPlayPause = document.getElementById('btnPlayPause');
         this.btnStop = document.getElementById('btnStop');
+        this.btnResetEQ = document.getElementById('btnResetEQ');
 
+        this.sliderPreAmp = document.getElementById('sliderPreAmp');
+        this.valPreAmp = document.getElementById('valPreAmp');
         this.sliderVocalVol = document.getElementById('sliderVocalVol');
         this.sliderMusicVol = document.getElementById('sliderMusicVol');
         this.valVocalVol = document.getElementById('valVocalVol');
         this.valMusicVol = document.getElementById('valMusicVol');
 
-        this.sliderFormantFilter = document.getElementById('sliderFormantFilter');
-        this.sliderBassBoost = document.getElementById('sliderBassBoost');
-        this.valFormantFilter = document.getElementById('valFormantFilter');
-        this.valBassBoost = document.getElementById('valBassBoost');
-
+        this.btnExportEQ = document.getElementById('btnExportEQ');
         this.btnExportVocals = document.getElementById('btnExportVocals');
         this.btnExportMusic = document.getElementById('btnExportMusic');
     }
@@ -101,7 +117,7 @@ class VocalSeparatorApp {
             this.audioInfoCard.classList.add('hidden');
         });
 
-        // Player Buttons
+        // Player Controls
         this.btnPlayPause.addEventListener('click', () => this.togglePlayPause());
         this.btnStop.addEventListener('click', () => this.stopPlayback());
 
@@ -110,18 +126,53 @@ class VocalSeparatorApp {
             this.seekTo(seekPct * this.audioDuration);
         });
 
-        // Mode Presets
-        const presetBtns = document.querySelectorAll('.preset-btn');
+        // 10 Faders Input Event Binding
+        for (let i = 0; i < 10; i++) {
+            const fader = document.getElementById(`eq-band-${i}`);
+            if (fader) {
+                fader.addEventListener('input', (e) => {
+                    const gainDb = parseFloat(e.target.value);
+                    this.setEQBandGain(i, gainDb);
+                });
+            }
+        }
+
+        // Reset EQ Button
+        this.btnResetEQ.addEventListener('click', () => this.applyEQPreset('FLAT'));
+
+        // EQ Preset Buttons
+        const presetBtns = document.querySelectorAll('.eq-preset-btn');
         presetBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const mode = e.currentTarget.getAttribute('data-mode');
+                const presetKey = e.currentTarget.getAttribute('data-eq-preset');
                 presetBtns.forEach(b => b.classList.remove('active'));
                 e.currentTarget.classList.add('active');
-                this.setPresetMode(mode);
+                this.applyEQPreset(presetKey);
             });
         });
 
-        // Volume Sliders
+        // Visualizer Mode Selector Buttons
+        const visBtns = document.querySelectorAll('.vis-mode-btn');
+        visBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const mode = e.currentTarget.getAttribute('data-vis-mode');
+                visBtns.forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                this.visMode = mode;
+                if (!this.isPlaying) this.drawVisualizerStatic();
+            });
+        });
+
+        // Pre-Amp & Mix Sliders
+        this.sliderPreAmp.addEventListener('input', (e) => {
+            const valDb = parseFloat(e.target.value);
+            this.preAmpGainDb = valDb;
+            this.valPreAmp.innerText = (valDb > 0 ? '+' : '') + valDb + ' dB';
+            if (this.preAmpNode) {
+                this.preAmpNode.gain.value = Math.pow(10, valDb / 20);
+            }
+        });
+
         this.sliderVocalVol.addEventListener('input', (e) => {
             const val = parseInt(e.target.value);
             this.valVocalVol.innerText = val + '%';
@@ -134,22 +185,10 @@ class VocalSeparatorApp {
             if (this.musicGain) this.musicGain.gain.value = val / 100;
         });
 
-        // DSP Sliders
-        this.sliderFormantFilter.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            this.valFormantFilter.innerText = val + ' Hz';
-            this.reprocessStems();
-        });
-
-        this.sliderBassBoost.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            this.valBassBoost.innerText = '+' + val + ' dB';
-            this.reprocessStems();
-        });
-
         // Export Buttons
-        this.btnExportVocals.addEventListener('click', () => this.exportAudio('VOCALS'));
-        this.btnExportMusic.addEventListener('click', () => this.exportAudio('MUSIC'));
+        this.btnExportEQ.addEventListener('click', () => this.exportEqualizedAudio());
+        this.btnExportVocals.addEventListener('click', () => this.exportAudioStem('VOCALS'));
+        this.btnExportMusic.addEventListener('click', () => this.exportAudioStem('MUSIC'));
     }
 
     // Initialize Web Audio Context
@@ -163,19 +202,14 @@ class VocalSeparatorApp {
         }
     }
 
-    // Read and Decode File
+    // Read and Decode Audio File
     async handleFile(file) {
-        if (!file.type.startsWith('audio/') && !file.name.match(/\.(mp3|wav|ogg|flac|m4a)$/i)) {
-            alert('لطفاً یک فایل صوتی معتبر (MP3, WAV, OGG, FLAC) انتخاب کنید.');
-            return;
-        }
-
         this.initAudioContext();
         this.stopPlayback();
 
         this.fileName = file.name.replace(/\.[^/.]+$/, "");
         this.trackName.innerText = file.name;
-        this.trackDetails.innerText = 'در حال خواندن و تحلیل فرکانسی فایل صوتی...';
+        this.trackDetails.innerText = 'در حال خواندن و دکود اطلاعات فرکانسی موزیک...';
 
         this.dropZone.classList.add('hidden');
         this.audioInfoCard.classList.remove('hidden');
@@ -194,18 +228,18 @@ class VocalSeparatorApp {
             this.timeCurrent.innerText = '00:00';
             this.timelineSlider.value = 0;
 
-            // Perform Audio Separation
+            // Generate Vocal and Music Stems
             this.reprocessStems();
             this.drawVisualizerStatic();
 
         } catch (err) {
-            alert('خطا در بارگذاری و دکود فایل صوتی: ' + err.message);
+            alert('خطا در بارگذاری موزیک: ' + err.message);
             this.dropZone.classList.remove('hidden');
             this.audioInfoCard.classList.add('hidden');
         }
     }
 
-    // DSP Stem Separation Engine (Mid/Side Phase Subtraction & Formant Filtering)
+    // DSP Stem Separation (Mid/Side Extraction)
     reprocessStems() {
         if (!this.rawAudioBuffer) return;
 
@@ -225,71 +259,65 @@ class VocalSeparatorApp {
         const mLeft = this.musicBuffer.getChannelData(0);
         const mRight = (numChannels > 1) ? this.musicBuffer.getChannelData(1) : mLeft;
 
-        const formantFreq = parseInt(this.sliderFormantFilter.value) || 1800;
-        const bassGain = (parseInt(this.sliderBassBoost.value) || 4) / 10;
-
-        // Simple IIR High-Pass & Low-Pass Coefficients for Human Vocal Formants (300Hz - 3400Hz)
         const alphaHP = 0.85; 
         const alphaLP = 0.35; 
 
         let lastOutHP_L = 0, lastInL = 0;
-        let lastOutHP_R = 0, lastInR = 0;
-        let lastOutLP_L = 0, lastOutLP_R = 0;
+        let lastOutLP_L = 0;
 
         for (let i = 0; i < length; i++) {
             const l = leftRaw[i];
             const r = rightRaw[i];
 
-            // Mid/Side Decomposition
-            // Mid = (Left + Right) / 2 -> Contains center vocals and main leads
-            // Side = (Left - Right) / 2 -> Contains panned instruments, stereo reverb, bass & guitars
             const mid = (l + r) * 0.5;
             const side = (l - r) * 0.5;
 
-            // Formant Bandpass Filtering on Mid Channel for Vocals
             lastOutHP_L = alphaHP * (lastOutHP_L + mid - lastInL);
             lastInL = mid;
             lastOutLP_L = lastOutLP_L + alphaLP * (lastOutHP_L - lastOutLP_L);
             const vocalSample = lastOutLP_L * 1.6;
 
-            // Vocal Buffer Assignment
             vLeft[i] = vocalSample;
             vRight[i] = vocalSample;
 
-            // Music Buffer Assignment: Side Channel + Sub-Bass Preservation
-            const bassPreservation = (mid - vocalSample) * (1.0 + bassGain);
-            const musicSampleL = side + bassPreservation;
-            const musicSampleR = -side + bassPreservation;
+            const musicSampleL = side + (mid - vocalSample);
+            const musicSampleR = -side + (mid - vocalSample);
 
             mLeft[i] = Math.max(-1.0, Math.min(1.0, musicSampleL));
             mRight[i] = Math.max(-1.0, Math.min(1.0, musicSampleR));
         }
+    }
 
-        if (this.isPlaying) {
-            const currentPos = this.getCurrentPlaybackTime();
-            this.seekTo(currentPos);
+    // Set Gain for Specific EQ Band
+    setEQBandGain(bandIndex, gainDb) {
+        this.eqGains[bandIndex] = gainDb;
+        const valEl = document.getElementById(`eq-val-${bandIndex}`);
+        if (valEl) {
+            valEl.innerText = (gainDb > 0 ? '+' : '') + gainDb + ' dB';
+        }
+
+        if (this.eqNodes[bandIndex]) {
+            this.eqNodes[bandIndex].gain.value = gainDb;
         }
     }
 
-    // Preset Modes
-    setPresetMode(mode) {
-        this.mode = mode;
-        if (mode === 'MIX') {
-            this.sliderVocalVol.value = 100;
-            this.sliderMusicVol.value = 100;
-        } else if (mode === 'VOCALS') {
-            this.sliderVocalVol.value = 120;
-            this.sliderMusicVol.value = 0;
-        } else if (mode === 'MUSIC') {
-            this.sliderVocalVol.value = 0;
-            this.sliderMusicVol.value = 110;
+    // Apply Preset EQ Array
+    applyEQPreset(presetKey) {
+        const gains = this.EQ_PRESETS[presetKey] || this.EQ_PRESETS.FLAT;
+        for (let i = 0; i < 10; i++) {
+            const gainDb = gains[i];
+            this.eqGains[i] = gainDb;
+
+            const fader = document.getElementById(`eq-band-${i}`);
+            if (fader) fader.value = gainDb;
+
+            const valEl = document.getElementById(`eq-val-${i}`);
+            if (valEl) valEl.innerText = (gainDb > 0 ? '+' : '') + gainDb + ' dB';
+
+            if (this.eqNodes[i]) {
+                this.eqNodes[i].gain.value = gainDb;
+            }
         }
-
-        this.valVocalVol.innerText = this.sliderVocalVol.value + '%';
-        this.valMusicVol.innerText = this.sliderMusicVol.value + '%';
-
-        if (this.vocalGain) this.vocalGain.gain.value = this.sliderVocalVol.value / 100;
-        if (this.musicGain) this.musicGain.gain.value = this.sliderMusicVol.value / 100;
     }
 
     // Playback Engine
@@ -306,27 +334,56 @@ class VocalSeparatorApp {
         this.initAudioContext();
         if (this.isPlaying) this.stopPlaybackNodes();
 
+        // 1. Audio Sources
         this.vocalSource = this.audioCtx.createBufferSource();
         this.musicSource = this.audioCtx.createBufferSource();
 
         this.vocalSource.buffer = this.vocalBuffer;
         this.musicSource.buffer = this.musicBuffer;
 
+        // 2. Pre-Amp Gain Node
+        this.preAmpNode = this.audioCtx.createGain();
+        this.preAmpNode.gain.value = Math.pow(10, this.preAmpGainDb / 20);
+
+        // 3. Build 10-Band BiquadFilter Nodes Chain
+        this.eqNodes = [];
+        for (let i = 0; i < 10; i++) {
+            const filter = this.audioCtx.createBiquadFilter();
+            filter.type = 'peaking';
+            filter.frequency.value = this.EQ_FREQUENCIES[i];
+            filter.Q.value = 1.4;
+            filter.gain.value = this.eqGains[i];
+            this.eqNodes.push(filter);
+        }
+
+        // Chain EQ filters: PreAmp -> EQ[0] -> EQ[1] -> ... -> EQ[9]
+        this.preAmpNode.connect(this.eqNodes[0]);
+        for (let i = 0; i < 9; i++) {
+            this.eqNodes[i].connect(this.eqNodes[i + 1]);
+        }
+
+        // 4. Stem Gain Nodes
         this.vocalGain = this.audioCtx.createGain();
         this.musicGain = this.audioCtx.createGain();
 
         this.vocalGain.gain.value = parseInt(this.sliderVocalVol.value) / 100;
         this.musicGain.gain.value = parseInt(this.sliderMusicVol.value) / 100;
 
-        this.analyser = this.audioCtx.createAnalyser();
-        this.analyser.fftSize = 128;
-
+        // Connect Sources to Stem Gains
         this.vocalSource.connect(this.vocalGain);
         this.musicSource.connect(this.musicGain);
 
-        this.vocalGain.connect(this.analyser);
-        this.musicGain.connect(this.analyser);
+        // Connect Stem Gains to PreAmp Node
+        this.vocalGain.connect(this.preAmpNode);
+        this.musicGain.connect(this.preAmpNode);
 
+        // 5. Analyser Node
+        this.analyser = this.audioCtx.createAnalyser();
+        this.analyser.fftSize = 256;
+
+        // Connect Last EQ Node to Analyser & Speakers Destination
+        const lastEqNode = this.eqNodes[9];
+        lastEqNode.connect(this.analyser);
         this.analyser.connect(this.audioCtx.destination);
 
         this.startTime = this.audioCtx.currentTime - offset;
@@ -359,7 +416,7 @@ class VocalSeparatorApp {
         this.stopPlaybackNodes();
         this.pauseOffset = 0;
         this.isPlaying = false;
-        this.btnPlayPause.innerText = '▶️ پخش';
+        this.btnPlayPause.innerText = '▶️ پخش موزیک';
         this.timeCurrent.innerText = '00:00';
         this.timelineSlider.value = 0;
         this.drawVisualizerStatic();
@@ -394,7 +451,7 @@ class VocalSeparatorApp {
         return Math.min(this.audioDuration, this.audioCtx.currentTime - this.startTime);
     }
 
-    // Dynamic Spectrum & Waveform Visualizer
+    // Dynamic Multi-Mode Spectrum Visualizer Engine
     renderVisualizer() {
         if (!this.isPlaying) return;
 
@@ -406,30 +463,105 @@ class VocalSeparatorApp {
         const h = this.canvas.height;
         this.ctx.clearRect(0, 0, w, h);
 
-        // Draw Spectrum Bars
         if (this.analyser) {
-            const bufferLength = this.analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            this.analyser.getByteFrequencyData(dataArray);
-
-            const barWidth = (w / bufferLength) * 2.2;
-            let x = 0;
-
-            for (let i = 0; i < bufferLength; i++) {
-                const barHeight = (dataArray[i] / 255) * (h - 20);
-
-                const grad = this.ctx.createLinearGradient(0, h, 0, 0);
-                grad.addColorStop(0, '#9d4edd');
-                grad.addColorStop(1, '#00f0ff');
-
-                this.ctx.fillStyle = grad;
-                this.ctx.fillRect(x, h - barHeight, barWidth - 2, barHeight);
-
-                x += barWidth;
+            if (this.visMode === 'SPECTRUM') {
+                this.drawSpectrum(w, h);
+            } else if (this.visMode === 'WAVEFORM') {
+                this.drawWaveform(w, h);
+            } else if (this.visMode === 'CIRCLE') {
+                this.drawCircleVisualizer(w, h);
             }
         }
 
         requestAnimationFrame(() => this.renderVisualizer());
+    }
+
+    // Mode 1: 3D Cyberpunk Neon Bar Spectrum
+    drawSpectrum(w, h) {
+        const bufferLength = this.analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        this.analyser.getByteFrequencyData(dataArray);
+
+        const barWidth = (w / bufferLength) * 1.8;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+            const barHeight = (dataArray[i] / 255) * (h - 25);
+
+            const grad = this.ctx.createLinearGradient(0, h, 0, 0);
+            grad.addColorStop(0, '#9d4edd');
+            grad.addColorStop(0.5, '#00f0ff');
+            grad.addColorStop(1, '#ffea00');
+
+            this.ctx.fillStyle = grad;
+            this.ctx.fillRect(x, h - barHeight, barWidth - 2, barHeight);
+
+            x += barWidth;
+        }
+    }
+
+    // Mode 2: Real-time Oscilloscope Waveform Trace
+    drawWaveform(w, h) {
+        const bufferLength = this.analyser.fftSize;
+        const timeData = new Uint8Array(bufferLength);
+        this.analyser.getByteTimeDomainData(timeData);
+
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeStyle = '#00f0ff';
+        this.ctx.shadowBlur = 15;
+        this.ctx.shadowColor = '#00f0ff';
+
+        this.ctx.beginPath();
+        const sliceWidth = w / bufferLength;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+            const v = timeData[i] / 128.0;
+            const y = (v * h) / 2;
+
+            if (i === 0) this.ctx.moveTo(x, y);
+            else this.ctx.lineTo(x, y);
+
+            x += sliceWidth;
+        }
+
+        this.ctx.lineTo(w, h / 2);
+        this.ctx.stroke();
+        this.ctx.shadowBlur = 0;
+    }
+
+    // Mode 3: Pulsing DJ Frequency Circle
+    drawCircleVisualizer(w, h) {
+        const bufferLength = this.analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        this.analyser.getByteFrequencyData(dataArray);
+
+        const centerX = w / 2;
+        const centerY = h / 2;
+        const radius = 45;
+
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        this.ctx.strokeStyle = '#9d4edd';
+        this.ctx.lineWidth = 4;
+        this.ctx.stroke();
+
+        for (let i = 0; i < bufferLength; i += 2) {
+            const amplitude = (dataArray[i] / 255) * 50;
+            const angle = (i / bufferLength) * Math.PI * 2;
+
+            const x1 = centerX + Math.cos(angle) * radius;
+            const y1 = centerY + Math.sin(angle) * radius;
+            const x2 = centerX + Math.cos(angle) * (radius + amplitude);
+            const y2 = centerY + Math.sin(angle) * (radius + amplitude);
+
+            this.ctx.strokeStyle = '#00f0ff';
+            this.ctx.lineWidth = 3;
+            this.ctx.beginPath();
+            this.ctx.moveTo(x1, y1);
+            this.ctx.lineTo(x2, y2);
+            this.ctx.stroke();
+        }
     }
 
     drawVisualizerStatic() {
@@ -437,30 +569,68 @@ class VocalSeparatorApp {
         const h = this.canvas.height;
         this.ctx.clearRect(0, 0, w, h);
 
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
         this.ctx.fillRect(0, 0, w, h);
 
         this.ctx.fillStyle = '#00f0ff';
-        this.ctx.font = '14px Vazirmatn, sans-serif';
+        this.ctx.font = '800 14px Vazirmatn, sans-serif';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('آماده پخش و تجزیه فرکانسی', w / 2, h / 2);
+        this.ctx.fillText('🎛️ اکولایزر ۱۰ بانده آماده تجزیه و پردازش فرکانسی', w / 2, h / 2);
     }
 
-    // Format Seconds to MM:SS
     formatTime(seconds) {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    // Client-Side WAV Audio Exporter (Generates downloadable .WAV audio blob)
-    exportAudio(type) {
-        const buffer = (type === 'VOCALS') ? this.vocalBuffer : this.musicBuffer;
-        if (!buffer) {
-            alert('هیچ دیتای صوتی پردازش‌شده‌ای برای خروجی وجود ندارد.');
-            return;
+    // Offline Audio Rendering for Equalized WAV Export
+    async exportEqualizedAudio() {
+        if (!this.rawAudioBuffer) return;
+
+        alert('در حال پردازش و اعمال اکولایزر استودیویی روی فایل موزیک...');
+
+        const sampleRate = this.rawAudioBuffer.sampleRate;
+        const length = this.rawAudioBuffer.length;
+        const numChannels = this.rawAudioBuffer.numberOfChannels;
+
+        const offlineCtx = new OfflineAudioContext(numChannels, length, sampleRate);
+        const source = offlineCtx.createBufferSource();
+        source.buffer = this.rawAudioBuffer;
+
+        const preAmp = offlineCtx.createGain();
+        preAmp.gain.value = Math.pow(10, this.preAmpGainDb / 20);
+
+        const offlineEqNodes = [];
+        for (let i = 0; i < 10; i++) {
+            const filter = offlineCtx.createBiquadFilter();
+            filter.type = 'peaking';
+            filter.frequency.value = this.EQ_FREQUENCIES[i];
+            filter.Q.value = 1.4;
+            filter.gain.value = this.eqGains[i];
+            offlineEqNodes.push(filter);
         }
 
+        source.connect(preAmp);
+        preAmp.connect(offlineEqNodes[0]);
+        for (let i = 0; i < 9; i++) {
+            offlineEqNodes[i].connect(offlineEqNodes[i + 1]);
+        }
+        offlineEqNodes[9].connect(offlineCtx.destination);
+
+        source.start(0);
+        const renderedBuffer = await offlineCtx.startRendering();
+
+        this.triggerWavDownload(renderedBuffer, `${this.fileName}_Equalized.wav`);
+    }
+
+    exportAudioStem(type) {
+        const buffer = (type === 'VOCALS') ? this.vocalBuffer : this.musicBuffer;
+        if (!buffer) return;
+        this.triggerWavDownload(buffer, `${this.fileName}_${type}.wav`);
+    }
+
+    triggerWavDownload(buffer, outputFileName) {
         const wavBytes = this.audioBufferToWav(buffer);
         const blob = new Blob([wavBytes], { type: 'audio/wav' });
         const url = URL.createObjectURL(blob);
@@ -468,7 +638,7 @@ class VocalSeparatorApp {
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `${this.fileName}_${type}.wav`;
+        a.download = outputFileName;
         document.body.appendChild(a);
         a.click();
         setTimeout(() => {
@@ -477,13 +647,11 @@ class VocalSeparatorApp {
         }, 100);
     }
 
-    // Fast PCM WAV Encoder
+    // AudioBuffer to PCM WAV Converter
     audioBufferToWav(buffer) {
         const numChannels = buffer.numberOfChannels;
         const sampleRate = buffer.sampleRate;
-        const format = 1; // PCM
         const bitDepth = 16;
-
         let result;
 
         if (numChannels === 2) {
@@ -498,7 +666,6 @@ class VocalSeparatorApp {
     interleave(inputL, inputR) {
         const length = inputL.length + inputR.length;
         const result = new Float32Array(length);
-
         let index = 0;
         let inputIndex = 0;
 
@@ -514,8 +681,7 @@ class VocalSeparatorApp {
         const bytesPerSample = bitDepth / 8;
         const blockAlign = numChannels * bytesPerSample;
         const dataByteCount = samples.length * bytesPerSample;
-        const headerByteCount = 44;
-        const totalByteCount = headerByteCount + dataByteCount;
+        const totalByteCount = 44 + dataByteCount;
 
         const arrayBuffer = new ArrayBuffer(totalByteCount);
         const dataView = new DataView(arrayBuffer);
@@ -526,34 +692,20 @@ class VocalSeparatorApp {
             }
         };
 
-        /* RIFF identifier */
         writeString(dataView, 0, 'RIFF');
-        /* RIFF chunk length */
         dataView.setUint32(4, 36 + dataByteCount, true);
-        /* RIFF type */
         writeString(dataView, 8, 'WAVE');
-        /* format chunk identifier */
         writeString(dataView, 12, 'fmt ');
-        /* format chunk length */
         dataView.setUint32(16, 16, true);
-        /* sample format (raw) */
         dataView.setUint16(20, 1, true);
-        /* channel count */
         dataView.setUint16(22, numChannels, true);
-        /* sample rate */
         dataView.setUint32(24, sampleRate, true);
-        /* byte rate (sample rate * block align) */
         dataView.setUint32(28, sampleRate * blockAlign, true);
-        /* block align */
         dataView.setUint16(32, blockAlign, true);
-        /* bits per sample */
         dataView.setUint16(34, bitDepth, true);
-        /* data chunk identifier */
         writeString(dataView, 36, 'data');
-        /* data chunk length */
         dataView.setUint32(40, dataByteCount, true);
 
-        // Write Float PCM samples converted to 16-bit Int
         let offset = 44;
         for (let i = 0; i < samples.length; i++, offset += 2) {
             const s = Math.max(-1, Math.min(1, samples[i]));
@@ -564,7 +716,7 @@ class VocalSeparatorApp {
     }
 }
 
-// Initialize Application on Load
+// Boot Application
 window.addEventListener('DOMContentLoaded', () => {
-    window.app = new VocalSeparatorApp();
+    window.app = new EqualizerApp();
 });
