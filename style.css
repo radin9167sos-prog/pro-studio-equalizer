@@ -1,13 +1,13 @@
 /*
  * ===================================================================
- * PRO STUDIO EQUALIZER — MODERN CYBERPUNK & GLASSMORPHISM STYLESHEET
- * Vertical Faders, Neon Spectrum Visualizers, Metallic Hardware UI
+ * PRO STUDIO EQUALIZER 31-BAND — MODERN CYBERPUNK STYLESHEET
+ * 31-Band Scrollable Fader Rack, Neon Spectrum Visualizers & Hardware UI
  * ===================================================================
  */
 
 :root {
-    --bg-dark: #070914;
-    --card-bg: rgba(14, 18, 34, 0.85);
+    --bg-dark: #060812;
+    --card-bg: rgba(14, 18, 34, 0.88);
     --border-glass: rgba(255, 255, 255, 0.12);
     --accent-cyan: #00f0ff;
     --accent-purple: #9d4edd;
@@ -83,7 +83,7 @@ body {
 
 .app-container {
     width: 100%;
-    max-width: 920px;
+    max-width: 960px;
     position: relative;
     z-index: 10;
     display: flex;
@@ -361,14 +361,14 @@ body {
     box-shadow: 0 10px 30px rgba(0, 240, 255, 0.6);
 }
 
-/* 10-BAND GRAPHIC EQUALIZER SECTION */
+/* 31-BAND GRAPHIC EQUALIZER SECTION */
 .eq-section {
-    background: rgba(8, 11, 24, 0.85);
-    border: 1px solid rgba(0, 240, 255, 0.2);
+    background: rgba(8, 11, 24, 0.88);
+    border: 1px solid rgba(0, 240, 255, 0.25);
     border-radius: 20px;
     padding: 20px;
     margin-bottom: 24px;
-    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6);
 }
 
 .eq-header {
@@ -424,16 +424,21 @@ body {
     box-shadow: 0 0 15px rgba(0, 240, 255, 0.35);
 }
 
-/* 10 Vertical Faders Grid */
-.eq-faders-container {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 8px;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+/* 31 Vertical Faders Scroll Wrapper */
+.eq-faders-scroll-wrapper {
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.eq-faders-container-31 {
+    display: flex;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    padding: 18px 10px;
+    padding: 18px 14px;
     align-items: center;
+    min-width: 1100px;
 }
 
 .eq-fader-col {
@@ -441,10 +446,12 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    flex: 1;
+    min-width: 32px;
 }
 
 .fader-val {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-family: var(--font-mono);
     font-weight: 800;
     color: var(--accent-gold);
@@ -461,14 +468,10 @@ body {
 }
 
 .fader-label {
-    font-size: 0.75rem;
+    font-size: 0.70rem;
     font-weight: 800;
     color: var(--text-main);
-}
-
-.fader-sub {
-    font-size: 0.65rem;
-    color: var(--text-muted);
+    white-space: nowrap;
 }
 
 /* STUDIO AUDIO PROCESSOR & EFFECTS */
