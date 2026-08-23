@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRO STUDIO EQUALIZER 31-BAND — اکولایزر ۳۱ بانده استودیویی و پردازشگر صوت</title>
+    <title>PRO STUDIO EQUALIZER 3.0 — اکولایزر ۳۱ بانده، ریورب استودیویی و پردازشگر صوت</title>
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="stylesheet" href="style.css">
@@ -22,10 +22,10 @@
         <header class="app-header">
             <div class="logo-badge">
                 <img src="icon.png" alt="Pro Equalizer Icon" class="header-app-icon">
-                <span class="logo-title">PRO STUDIO EQUALIZER 31-BAND & DSP PROCESSOR</span>
+                <span class="logo-title">PRO STUDIO EQUALIZER 3.0 & DSP PROCESSOR</span>
             </div>
             <h1>اکولایزر ۳۱ بانده گرافیکی استودیویی و پردازشگر صوت فوق حرفه‌ای</h1>
-            <p class="subtitle">تنظیم دقیق ۳۱ باند فرکانسی، تغییر سرعت و گام موزیک (Pitch/Tempo)، ساب‌بیس مجازی خودرو و ورودی زنده میکروفون</p>
+            <p class="subtitle">تنظیم ۳۱ باند فرکانسی، طنین ریورب استودیویی، تغییر گام و سرعت (Pitch/Tempo)، فیلترهای HPF/LPF و گرمای آنالوگ</p>
         </header>
 
         <!-- Drop Zone Card -->
@@ -102,10 +102,46 @@
                 </div>
             </div>
 
-            <!-- STUDIO AUDIO PROCESSOR & EFFECTS -->
+            <!-- STUDIO AUDIO PROCESSOR & MASTERING EFFECTS -->
             <div class="processor-section">
-                <div class="processor-title">⚡ پردازشگر سرعت، گام، ساب‌بیس و میکسر</div>
+                <div class="processor-title">⚡ افکت‌های مسترینگ استودیویی و پردازشگر صوتی ۳.۰</div>
                 <div class="processor-grid">
+                    <!-- Studio Reverb Effect -->
+                    <div class="proc-card">
+                        <div class="proc-header">
+                            <span class="proc-label">🔊 طنین ریورب استودیویی (Studio Reverb)</span>
+                            <span class="proc-val" id="valReverb">0%</span>
+                        </div>
+                        <input type="range" id="sliderReverb" class="app-slider slider-cyan" min="0" max="100" value="0" step="1">
+                    </div>
+
+                    <!-- Vintage Tape Warmth & Tube Distortion -->
+                    <div class="proc-card">
+                        <div class="proc-header">
+                            <span class="proc-label">📼 گرمای آنالوگ و تیوب (Tape Warmth)</span>
+                            <span class="proc-val" id="valTapeWarmth">0%</span>
+                        </div>
+                        <input type="range" id="sliderTapeWarmth" class="app-slider slider-purple" min="0" max="100" value="0" step="1">
+                    </div>
+
+                    <!-- High-Pass Cutoff Filter (HPF) -->
+                    <div class="proc-card">
+                        <div class="proc-header">
+                            <span class="proc-label">🔪 فیلتر برش فرکانس پایین (High-Pass HPF)</span>
+                            <span class="proc-val" id="valHPF">20 Hz</span>
+                        </div>
+                        <input type="range" id="sliderHPF" class="app-slider slider-cyan" min="20" max="400" value="20" step="5">
+                    </div>
+
+                    <!-- Low-Pass Cutoff Filter (LPF) -->
+                    <div class="proc-card">
+                        <div class="proc-header">
+                            <span class="proc-label">🕯️ فیلتر برش فرکانس بالا (Low-Pass LPF)</span>
+                            <span class="proc-val" id="valLPF">20 kHz</span>
+                        </div>
+                        <input type="range" id="sliderLPF" class="app-slider slider-purple" min="3000" max="20000" value="20000" step="100">
+                    </div>
+
                     <!-- Speed / Tempo Control -->
                     <div class="proc-card">
                         <div class="proc-header">
@@ -164,7 +200,7 @@
 
             <!-- EXPORT SECTION -->
             <div class="export-section">
-                <div class="export-title">💾 دانلود خروجی اکولایزه شده ۳۱ بانده (Processed WAV Export)</div>
+                <div class="export-title">💾 دانلود خروجی اکولایزه شده ۳۱ بانده ۳.۰ (Processed WAV Export)</div>
                 <div class="export-buttons-row">
                     <button class="btn-export btn-export-eq" id="btnExportEQ">
                         <span>🎛️</span> دانلود موزیک اکولایزه شده ۳۱ بانده (Equalized WAV)
