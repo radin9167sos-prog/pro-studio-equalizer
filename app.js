@@ -1,7 +1,7 @@
 /*
  * ===================================================================
- * PRO STUDIO EQUALIZER 3.0 — WEB AUDIO DSP ENGINE & MASTERING PROCESSOR
- * 31 ISO Frequencies, Reverb Convolver, Tape Warmth, HPF/LPF, Pitch & Tempo
+ * PRO STUDIO EQUALIZER 4.0 — WEB AUDIO DSP ENGINE & DUAL-MODE MASTERING
+ * Simple 10-Band EQ Mode + Pro 31-Band ISO DSP Rack + 8D Spatial Audio
  * ===================================================================
  */
 
@@ -25,6 +25,7 @@ class Equalizer31App {
         this.reverbNode = null;
         this.reverbGainNode = null;
         this.tapeNode = null;
+        this.panner8DNode = null;
         this.compressorNode = null;
         this.eqNodes = [];
         this.vocalGain = null;
@@ -33,10 +34,15 @@ class Equalizer31App {
 
         this.isPlaying = false;
         this.isMicActive = false;
+        this.is8DActive = false;
+        this.pannerAngle = 0;
+        this.pannerInterval = null;
+
         this.startTime = 0;
         this.pauseOffset = 0;
         this.audioDuration = 0;
         this.fileName = 'Track';
+        this.currentViewMode = 'SIMPLE'; // 'SIMPLE' or 'PRO'
 
         // 31 Standard ISO 1/3 Octave Equalizer Frequencies (Hz)
         this.EQ_FREQUENCIES = [
@@ -44,6 +50,8 @@ class Equalizer31App {
             630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000,
             10000, 12500, 16000, 20000
         ];
+        this.SIMPLE_INDICES = [2, 4, 6, 7, 8, 9, 10, 11, 12, 13]; // Map 10 simple bands to 31-band indices
+
         this.eqGains = new Array(31).fill(0); // Default flat gains (dB)
         this.preAmpGainDb = 0;
         this.tempoSpeed = 1.0;
@@ -54,7 +62,7 @@ class Equalizer31App {
         this.hpfFreq = 20;
         this.lpfFreq = 20000;
 
-        // Equalizer 31-Band Presets
+        // Presets
         this.EQ_PRESETS = {
             FLAT:        new Array(31).fill(0),
             BASS_BOOST:  [12, 11, 10, 9, 8, 7, 6, 4, 3, 2, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8],
@@ -76,6 +84,7 @@ class Equalizer31App {
         this.audioInput = document.getElementById('audioInput');
         this.btnSelectFile = document.getElementById('btnSelectFile');
         this.btnLiveMicStart = document.getElementById('btnLiveMicStart');
+        this.btnProModeStart = document.getElementById('btnProModeStart');
         this.audioInfoCard = document.getElementById('audioInfoCard');
 
         this.trackName = document.getElementById('trackName');
@@ -92,7 +101,18 @@ class Equalizer31App {
         this.btnPlayPause = document.getElementById('btnPlayPause');
         this.btnStop = document.getElementById('btnStop');
         this.btnToggleMic = document.getElementById('btnToggleMic');
+
+        // Mode Switcher Tabs
+        this.btnTabSimple = document.getElementById('btnTabSimple');
+        this.btnTabPro = document.getElementById('btnTabPro');
+        this.simpleModeContainer = document.getElementById('simpleModeContainer');
+        this.proModeContainer = document.getElementById('proModeContainer');
+
+        this.btnResetSimpleEQ = document.getElementById('btnResetSimpleEQ');
         this.btnResetEQ = document.getElementById('btnResetEQ');
+
+        this.btnToggle8D = document.getElementById('btnToggle8D');
+        this.val8D = document.getElementById('val8D');
 
         this.sliderReverb = document.getElementById('sliderReverb');
         this.valReverb = document.getElementById('valReverb');
@@ -112,10 +132,11 @@ class Equalizer31App {
 
         this.sliderPreAmp = document.getElementById('sliderPreAmp');
         this.valPreAmp = document.getElementById('valPreAmp');
-        this.sliderVocalVol = document.getElementById('sliderVocalVol');
-        this.sliderMusicVol = document.getElementById('sliderMusicVol');
-        this.valVocalVol = document.getElementById('valVocalVol');
-        this.valMusicVol = document.getElementById('valMusicVol');
+
+        this.sliderVocalVolSimple = document.getElementById('sliderVocalVolSimple');
+        this.valVocalVolSimple = document.getElementById('valVocalVolSimple');
+        this.sliderMusicVolSimple = document.getElementById('sliderMusicVolSimple');
+        this.valMusicVolSimple = document.getElementById('valMusicVolSimple');
 
         this.btnExportEQ = document.getElementById('btnExportEQ');
         this.btnExportVocals = document.getElementById('btnExportVocals');
@@ -144,6 +165,12 @@ class Equalizer31App {
         this.dropZone.addEventListener('click', () => this.audioInput.click());
         this.btnSelectFile.addEventListener('click', (e) => {
             e.stopPropagation();
+            this.audioInput.click();
+        });
+
+        this.btnProModeStart.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.switchViewMode('PRO');
             this.audioInput.click();
         });
 
@@ -182,6 +209,10 @@ class Equalizer31App {
         });
         this.btnToggleMic.addEventListener('click', () => this.toggleLiveMic());
 
+        // Mode Switcher Tabs
+        this.btnTabSimple.addEventListener('click', () => this.switchViewMode('SIMPLE'));
+        this.btnTabPro.addEventListener('click', () => this.switchViewMode('PRO'));
+
         this.btnPlayPause.addEventListener('click', () => this.togglePlayPause());
         this.btnStop.addEventListener('click', () => this.stopPlayback());
 
@@ -189,6 +220,20 @@ class Equalizer31App {
             const seekPct = parseFloat(e.target.value) / 100;
             this.seekTo(seekPct * this.audioDuration);
         });
+
+        // 10 Simple Band Faders
+        for (let i = 0; i < 10; i++) {
+            const simpleFader = document.getElementById(`simple-band-${i}`);
+            if (simpleFader) {
+                simpleFader.addEventListener('input', (e) => {
+                    const gainDb = parseFloat(e.target.value);
+                    const target31Index = this.SIMPLE_INDICES[i];
+                    this.setEQBandGain(target31Index, gainDb);
+                    const simpleVal = document.getElementById(`simple-val-${i}`);
+                    if (simpleVal) simpleVal.innerText = (gainDb > 0 ? '+' : '') + gainDb + ' dB';
+                });
+            }
+        }
 
         // 31 Faders
         for (let i = 0; i < 31; i++) {
@@ -201,7 +246,13 @@ class Equalizer31App {
             }
         }
 
-        this.btnResetEQ.addEventListener('click', () => this.applyEQPreset('FLAT'));
+        if (this.btnResetSimpleEQ) this.btnResetSimpleEQ.addEventListener('click', () => this.applyEQPreset('FLAT'));
+        if (this.btnResetEQ) this.btnResetEQ.addEventListener('click', () => this.applyEQPreset('FLAT'));
+
+        // 8D Audio Toggle Button
+        if (this.btnToggle8D) {
+            this.btnToggle8D.addEventListener('click', () => this.toggle8DAudio());
+        }
 
         const presetBtns = document.querySelectorAll('.eq-preset-btn');
         presetBtns.forEach(btn => {
@@ -287,21 +338,82 @@ class Equalizer31App {
             }
         });
 
-        this.sliderVocalVol.addEventListener('input', (e) => {
+        this.sliderVocalVolSimple.addEventListener('input', (e) => {
             const val = parseInt(e.target.value);
-            this.valVocalVol.innerText = val + '%';
+            this.valVocalVolSimple.innerText = val + '%';
             if (this.vocalGain) this.vocalGain.gain.value = val / 100;
         });
 
-        this.sliderMusicVol.addEventListener('input', (e) => {
+        this.sliderMusicVolSimple.addEventListener('input', (e) => {
             const val = parseInt(e.target.value);
-            this.valMusicVol.innerText = val + '%';
+            this.valMusicVolSimple.innerText = val + '%';
             if (this.musicGain) this.musicGain.gain.value = val / 100;
         });
 
         this.btnExportEQ.addEventListener('click', () => this.exportEqualizedAudio());
         this.btnExportVocals.addEventListener('click', () => this.exportAudioStem('VOCALS'));
         this.btnExportMusic.addEventListener('click', () => this.exportAudioStem('MUSIC'));
+    }
+
+    switchViewMode(mode) {
+        this.currentViewMode = mode;
+        if (mode === 'SIMPLE') {
+            this.btnTabSimple.classList.add('active');
+            this.btnTabPro.classList.remove('active');
+            this.simpleModeContainer.classList.remove('hidden');
+            this.proModeContainer.classList.add('hidden');
+        } else {
+            this.btnTabPro.classList.add('active');
+            this.btnTabSimple.classList.remove('active');
+            this.proModeContainer.classList.remove('hidden');
+            this.simpleModeContainer.classList.add('hidden');
+        }
+    }
+
+    toggle8DAudio() {
+        this.is8DActive = !this.is8DActive;
+        if (this.is8DActive) {
+            this.btnToggle8D.innerText = '🌐 8D Audio: فعال (در حال چرخش صوتی 360°)';
+            this.btnToggle8D.style.borderColor = '#ff007f';
+            this.val8D.innerText = 'فعال 360°';
+            this.start8DRotation();
+        } else {
+            this.btnToggle8D.innerText = '🌐 فعال‌سازی حالت 8D Audio';
+            this.btnToggle8D.style.borderColor = '';
+            this.val8D.innerText = 'غیرفعال';
+            this.stop8DRotation();
+        }
+    }
+
+    start8DRotation() {
+        this.stop8DRotation();
+        this.pannerInterval = setInterval(() => {
+            if (!this.isPlaying || !this.panner8DNode) return;
+            this.pannerAngle += 0.04;
+            const x = Math.sin(this.pannerAngle) * 3;
+            const z = Math.cos(this.pannerAngle) * 3;
+            if (this.panner8DNode.positionX) {
+                this.panner8DNode.positionX.value = x;
+                this.panner8DNode.positionZ.value = z;
+            } else if (this.panner8DNode.setPosition) {
+                this.panner8DNode.setPosition(x, 0, z);
+            }
+        }, 50);
+    }
+
+    stop8DRotation() {
+        if (this.pannerInterval) {
+            clearInterval(this.pannerInterval);
+            this.pannerInterval = null;
+        }
+        if (this.panner8DNode) {
+            if (this.panner8DNode.positionX) {
+                this.panner8DNode.positionX.value = 0;
+                this.panner8DNode.positionZ.value = 0;
+            } else if (this.panner8DNode.setPosition) {
+                this.panner8DNode.setPosition(0, 0, 0);
+            }
+        }
     }
 
     async initAudioContext() {
@@ -317,7 +429,6 @@ class Equalizer31App {
         }
     }
 
-    // Generate Reverb Impulse Response Buffer
     createImpulseResponse(ctx, duration = 1.2, decay = 1.5) {
         const sampleRate = ctx.sampleRate;
         const length = Math.floor(sampleRate * duration);
@@ -333,7 +444,6 @@ class Equalizer31App {
         return impulse;
     }
 
-    // Generate Tape Warmth Soft-Clipping Saturation Curve
     createDistortionCurve(amount = 0) {
         const k = amount * 1.2;
         const n_samples = 44100;
@@ -481,23 +591,25 @@ class Equalizer31App {
         if (this.eqNodes[bandIndex]) {
             this.eqNodes[bandIndex].gain.value = gainDb;
         }
+
+        // Sync 10-band simple UI sliders if mapped
+        const simpleIdx = this.SIMPLE_INDICES.indexOf(bandIndex);
+        if (simpleIdx !== -1) {
+            const simpleFader = document.getElementById(`simple-band-${simpleIdx}`);
+            const simpleVal = document.getElementById(`simple-val-${simpleIdx}`);
+            if (simpleFader) simpleFader.value = gainDb;
+            if (simpleVal) simpleVal.innerText = (gainDb > 0 ? '+' : '') + gainDb + ' dB';
+        }
     }
 
     applyEQPreset(presetKey) {
         const gains = this.EQ_PRESETS[presetKey] || this.EQ_PRESETS.FLAT;
         for (let i = 0; i < 31; i++) {
             const gainDb = gains[i];
-            this.eqGains[i] = gainDb;
+            this.setEQBandGain(i, gainDb);
 
             const fader = document.getElementById(`eq-band-${i}`);
             if (fader) fader.value = gainDb;
-
-            const valEl = document.getElementById(`eq-val-${i}`);
-            if (valEl) valEl.innerText = (gainDb > 0 ? '+' : '') + gainDb + ' dB';
-
-            if (this.eqNodes[i]) {
-                this.eqNodes[i].gain.value = gainDb;
-            }
         }
     }
 
@@ -509,15 +621,13 @@ class Equalizer31App {
         if (this.musicSource) this.musicSource.playbackRate.value = combinedRate;
     }
 
-    // Setup Master Persistent Audio Graph
+    // Setup Master Persistent Audio Graph (Includes 8D PannerNode)
     setupAudioGraph() {
         if (!this.audioCtx) return;
 
-        // Pre-Amp Node
         this.preAmpNode = this.audioCtx.createGain();
         this.preAmpNode.gain.value = Math.pow(10, this.preAmpGainDb / 20);
 
-        // Sub-Bass Exciter Node
         this.subBassFilterNode = this.audioCtx.createBiquadFilter();
         this.subBassFilterNode.type = 'lowpass';
         this.subBassFilterNode.frequency.value = 60;
@@ -525,7 +635,6 @@ class Equalizer31App {
         this.subBassGainNode = this.audioCtx.createGain();
         this.subBassGainNode.gain.value = (this.subBassLevel / 100) * 1.5;
 
-        // High-Pass (HPF) & Low-Pass (LPF) Cutoff Filters
         this.hpfNode = this.audioCtx.createBiquadFilter();
         this.hpfNode.type = 'highpass';
         this.hpfNode.frequency.value = this.hpfFreq;
@@ -534,19 +643,21 @@ class Equalizer31App {
         this.lpfNode.type = 'lowpass';
         this.lpfNode.frequency.value = this.lpfFreq;
 
-        // Studio Reverb Convolver Node
         this.reverbNode = this.audioCtx.createConvolver();
         this.reverbNode.buffer = this.createImpulseResponse(this.audioCtx, 1.2, 1.5);
 
         this.reverbGainNode = this.audioCtx.createGain();
         this.reverbGainNode.gain.value = this.reverbLevel / 100;
 
-        // Tape Warmth WaveShaper Node (Optimized oversampling for mobile)
         this.tapeNode = this.audioCtx.createWaveShaper();
         this.tapeNode.curve = this.createDistortionCurve(this.tapeWarmthLevel);
         this.tapeNode.oversample = 'none';
 
-        // Dynamic Compressor Node
+        // 8D Audio PannerNode
+        this.panner8DNode = this.audioCtx.createPanner();
+        this.panner8DNode.panningModel = 'HRTF';
+        this.panner8DNode.distanceModel = 'linear';
+
         this.compressorNode = this.audioCtx.createDynamicsCompressor();
         this.compressorNode.threshold.value = -12;
         this.compressorNode.knee.value = 30;
@@ -554,7 +665,6 @@ class Equalizer31App {
         this.compressorNode.attack.value = 0.003;
         this.compressorNode.release.value = 0.25;
 
-        // Build 31-Band BiquadFilter Chain
         this.eqNodes = [];
         for (let i = 0; i < 31; i++) {
             const filter = this.audioCtx.createBiquadFilter();
@@ -565,7 +675,7 @@ class Equalizer31App {
             this.eqNodes.push(filter);
         }
 
-        // Chain Connections: PreAmp -> HPF -> LPF -> EQ[0..30] -> Tape -> Reverb -> Compressor -> Destination
+        // Connections: PreAmp -> HPF -> LPF -> EQ[0..30] -> Tape -> Reverb -> Panner8D -> Compressor -> Destination
         this.preAmpNode.connect(this.hpfNode);
         this.hpfNode.connect(this.lpfNode);
 
@@ -580,16 +690,15 @@ class Equalizer31App {
         const lastEqNode = this.eqNodes[30];
         lastEqNode.connect(this.tapeNode);
 
-        // Connect Reverb in parallel
         lastEqNode.connect(this.reverbNode);
         this.reverbNode.connect(this.reverbGainNode);
         this.reverbGainNode.connect(this.tapeNode);
 
-        // Analyser & Destination
         this.analyser = this.audioCtx.createAnalyser();
         this.analyser.fftSize = 512;
 
-        this.tapeNode.connect(this.compressorNode);
+        this.tapeNode.connect(this.panner8DNode);
+        this.panner8DNode.connect(this.compressorNode);
         this.compressorNode.connect(this.analyser);
         this.analyser.connect(this.audioCtx.destination);
     }
@@ -618,8 +727,11 @@ class Equalizer31App {
         this.vocalGain = this.audioCtx.createGain();
         this.musicGain = this.audioCtx.createGain();
 
-        this.vocalGain.gain.value = parseInt(this.sliderVocalVol.value) / 100;
-        this.musicGain.gain.value = parseInt(this.sliderMusicVol.value) / 100;
+        const vVol = parseFloat(this.sliderVocalVolSimple.value) / 100;
+        const mVol = parseFloat(this.sliderMusicVolSimple.value) / 100;
+
+        this.vocalGain.gain.value = vVol;
+        this.musicGain.gain.value = mVol;
 
         this.vocalSource.connect(this.vocalGain);
         this.musicSource.connect(this.musicGain);
@@ -636,6 +748,8 @@ class Equalizer31App {
         this.isPlaying = true;
         this.btnPlayPause.innerText = '⏸️ توقف موقت';
 
+        if (this.is8DActive) this.start8DRotation();
+
         this.vocalSource.onended = () => {
             if (this.getCurrentPlaybackTime() >= this.audioDuration - 0.1) {
                 this.stopPlayback();
@@ -649,12 +763,14 @@ class Equalizer31App {
         if (!this.isPlaying) return;
         this.pauseOffset = this.getCurrentPlaybackTime();
         this.stopPlaybackNodes();
+        this.stop8DRotation();
         this.isPlaying = false;
         this.btnPlayPause.innerText = '▶️ ادامه پخش';
     }
 
     stopPlayback() {
         this.stopPlaybackNodes();
+        this.stop8DRotation();
         this.pauseOffset = 0;
         this.isPlaying = false;
         this.btnPlayPause.innerText = '▶️ پخش موزیک';
@@ -812,7 +928,7 @@ class Equalizer31App {
         this.ctx.fillStyle = '#00f0ff';
         this.ctx.font = '800 14px Vazirmatn, sans-serif';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('🎛️ اکولایزر ۳۱ بانده استودیویی ۳.۰ آماده پردازش فرکانسی', w / 2, h / 2);
+        this.ctx.fillText('🎛️ کنسول اکولایزر ۴.۰ و پردازشگر صوت استودیویی آماده است', w / 2, h / 2);
     }
 
     formatTime(seconds) {
@@ -824,7 +940,7 @@ class Equalizer31App {
     async exportEqualizedAudio() {
         if (!this.rawAudioBuffer) return;
 
-        alert('در حال پردازش و دانلود موزیک با تمامی افکت‌های اکولایزر، ریورب و آنالوگ نسخه ۳.۰...');
+        alert('در حال پردازش و دانلود موزیک با تمامی افکت‌های اکولایزر، ریورب و آنالوگ نسخه ۴.۰...');
 
         const sampleRate = this.rawAudioBuffer.sampleRate;
         const length = this.rawAudioBuffer.length;
@@ -874,7 +990,7 @@ class Equalizer31App {
         source.start(0);
         const renderedBuffer = await offlineCtx.startRendering();
 
-        this.triggerWavDownload(renderedBuffer, `${this.fileName}_Equalized3.0.wav`);
+        this.triggerWavDownload(renderedBuffer, `${this.fileName}_Equalized4.0.wav`);
     }
 
     exportAudioStem(type) {

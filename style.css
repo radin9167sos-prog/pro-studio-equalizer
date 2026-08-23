@@ -236,6 +236,82 @@ body {
     border-color: rgba(255, 255, 255, 0.3);
 }
 
+.landing-buttons-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.btn-pro-mode {
+    padding: 14px 26px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ff007f, #9d4edd);
+    border: 1px solid rgba(255, 0, 127, 0.5);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(255, 0, 127, 0.4);
+    transition: all 0.25s ease;
+}
+
+.btn-pro-mode:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(255, 0, 127, 0.6);
+}
+
+/* Mode Switcher Bar */
+.mode-switcher-bar {
+    display: flex;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px;
+    border-radius: 16px;
+    margin-bottom: 22px;
+}
+
+.mode-tab-btn {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: center;
+}
+
+.mode-tab-btn.active {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(157, 78, 221, 0.25));
+    border: 1px solid var(--accent-cyan);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
+}
+
+/* 10-Band Simple Faders Grid */
+.eq-faders-container-10 {
+    display: flex;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 18px 14px;
+    justify-content: space-around;
+}
+
+.pro-rack-border {
+    border: 1px solid rgba(255, 0, 127, 0.3) !important;
+    box-shadow: 0 0 25px rgba(255, 0, 127, 0.15) !important;
+}
+
 /* Track Header */
 .track-header {
     display: flex;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRO STUDIO EQUALIZER 3.0 — اکولایزر ۳۱ بانده، ریورب استودیویی و پردازشگر صوت</title>
+    <title>PRO STUDIO EQUALIZER 4.0 — اکولایزر عمومی و کنسول فوق حرفه‌ای استودیویی</title>
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="stylesheet" href="style.css">
@@ -22,22 +22,23 @@
         <header class="app-header">
             <div class="logo-badge">
                 <img src="icon.png" alt="Pro Equalizer Icon" class="header-app-icon">
-                <span class="logo-title">PRO STUDIO EQUALIZER 3.0 & DSP PROCESSOR</span>
+                <span class="logo-title">PRO STUDIO EQUALIZER 4.0 & DSP RACK</span>
             </div>
-            <h1>اکولایزر ۳۱ بانده گرافیکی استودیویی و پردازشگر صوت فوق حرفه‌ای</h1>
-            <p class="subtitle">تنظیم ۳۱ باند فرکانسی، طنین ریورب استودیویی، تغییر گام و سرعت (Pitch/Tempo)، فیلترهای HPF/LPF و گرمای آنالوگ</p>
+            <h1>اکولایزر گرافیکی و پردازشگر صوت فوق حرفه‌ای استودیویی</h1>
+            <p class="subtitle">انتخاب بین حالت عمومی ساده (۱۰ بانده) و کنسول فوق حرفه‌ای استودیو (۳۱ بانده، 8D Audio، ریورب و آنالوگ)</p>
         </header>
 
-        <!-- Drop Zone Card -->
+        <!-- Drop Zone Landing Card -->
         <div class="card drop-card" id="dropZone">
             <input type="file" id="audioInput" accept="audio/*" class="file-input-hidden">
             <div class="drop-content">
                 <div class="drop-icon-pulse">🎚️</div>
                 <div class="drop-title">فایل موزیک خود را بکشید و اینجا رها کنید</div>
                 <div class="drop-sub">یا برای انتخاب فایل کلیک کنید (پشتیبانی از MP3, WAV, OGG, FLAC, M4A)</div>
-                <div style="display:flex; justify-content:center; gap:12px; margin-top:16px;">
+                <div class="landing-buttons-row">
                     <button class="btn-primary btn-select" id="btnSelectFile">📂 انتخاب موزیک از سیستم</button>
                     <button class="btn-secondary" id="btnLiveMicStart">🎙️ ورودی زنده میکروفون</button>
+                    <button class="btn-pro-mode" id="btnProModeStart">⚡ ورود مستقیم به کنسول فوق حرفه‌ای (PRO RACK)</button>
                 </div>
             </div>
         </div>
@@ -77,134 +78,172 @@
                 <button class="btn-secondary" id="btnToggleMic">🎙️ میکروفون زنده</button>
             </div>
 
-            <!-- PRO 31-BAND GRAPHIC EQUALIZER SECTION -->
-            <div class="eq-section">
-                <div class="eq-header">
-                    <div class="eq-title">🎚️ اکولایزر ۳۱ بانده استودیویی (31-Band 1/3 Octave Graphic EQ)</div>
-                    <button class="btn-secondary btn-reset-eq" id="btnResetEQ">🔄 بازنشانی ۳۱ باند</button>
+            <!-- DUAL MODE SWITCHER SEGMENTED BAR -->
+            <div class="mode-switcher-bar">
+                <button class="mode-tab-btn active" id="btnTabSimple">🎧 اکولایزر عمومی (۱۰ بانده ساده)</button>
+                <button class="mode-tab-btn" id="btnTabPro">🎛️ کنسول فوق حرفه‌ای استودیو (۳۱ بانده + 8D + DSP)</button>
+            </div>
+
+            <!-- SECTION 1: SIMPLE EQUALIZER MODE (حالت عمومی و ساده) -->
+            <div id="simpleModeContainer" class="mode-view-container">
+                <div class="eq-section">
+                    <div class="eq-header">
+                        <div class="eq-title">🎧 اکولایزر ۱۰ بانده عمومی و پریست‌های سریع</div>
+                        <button class="btn-secondary btn-reset-eq" id="btnResetSimpleEQ">🔄 بازنشانی ۱۰ باند</button>
+                    </div>
+
+                    <!-- Presets Bar -->
+                    <div class="eq-presets-grid">
+                        <button class="eq-preset-btn active" data-eq-preset="FLAT">🎧 فابریک (Flat)</button>
+                        <button class="eq-preset-btn" data-eq-preset="BASS_BOOST">💥 شوتی بیس (Bass Boost)</button>
+                        <button class="eq-preset-btn" data-eq-preset="VOCAL_BOOST">🎤 صدای خواننده (Vocal)</button>
+                        <button class="eq-preset-btn" data-eq-preset="POP_DANCE">💃 پاپ و دیسکو (Pop)</button>
+                        <button class="eq-preset-btn" data-eq-preset="ROCK">🎸 راک (Rock)</button>
+                        <button class="eq-preset-btn" data-eq-preset="HIFI">⚡ کریستالی (Hi-Fi)</button>
+                    </div>
+
+                    <!-- 10 Vertical Faders Grid -->
+                    <div class="eq-faders-container-10">
+                        <div class="eq-fader-col"><span class="fader-val" id="simple-val-0">0 dB</span><input type="range" class="eq-fader" id="simple-band-0" data-simple-idx="0" min="-12" max="12" step="0.5" value="0" orient="vertical"><span class="fader-label">32 Hz</span></div>
+                        <div class="eq-fader-col"><span class="fader-val" id="simple-val-1">0 dB</span><input type="range" class="eq-fader" id="simple-band-1" data-simple-idx="1" min="-12" max="12" step="0.5" value="0" orient="vertical"><span class="fader-label">64 Hz</span></div>
+                        <div class="eq-fader-col"><span class="fader-val" id="simple-val-2">0 dB</span><input type="range" class="eq-fader" id="simple-band-2" data-simple-idx="2" min="-12" max="12" step="0.5" value="0" orient="vertical"><span class="fader-label">125 Hz</span></div>
+                        <div class="eq-fader-col"><span class="fader-val" id="simple-val-3">0 dB</span><input type="range" class="eq-fader" id="simple-band-3" data-simple-idx="3" min="-12" max="12" step="0.5" value="0" orient="vertical"><span class="fader-label">250 Hz</span></div>
+                        <div class="eq-fader-col"><span class="fader-val" id="simple-val-4">0 dB</span><input type="range" class="eq-fader" id="simple-band-4" data-simple-idx="4" min="-12" max="12" step="0.5" value="0" orient="vertical"><span class="fader-label">500 Hz</span></div>
+                        <div class="eq-fader-col"><span class="fader-val" id="simple-val-5">0 dB</span><input type="range" class="eq-fader" id="simple-band-5" data-simple-idx="5" min="-12" max="12" step="0.5" value="0" orient="vertical"><span class="fader-label">1 kHz</span></div>
+                        <div class="eq-fader-col"><span class="fader-val" id="simple-val-6">0 dB</span><input type="range" class="eq-fader" id="simple-band-6" data-simple-idx="6" min="-12" max="12" step="0.5" value="0" orient="vertical"><span class="fader-label">2 kHz</span></div>
+                        <div class="eq-fader-col"><span class="fader-val" id="simple-val-7">0 dB</span><input type="range" class="eq-fader" id="simple-band-7" data-simple-idx="7" min="-12" max="12" step="0.5" value="0" orient="vertical"><span class="fader-label">4 kHz</span></div>
+                        <div class="eq-fader-col"><span class="fader-val" id="simple-val-8">0 dB</span><input type="range" class="eq-fader" id="simple-band-8" data-simple-idx="8" min="-12" max="12" step="0.5" value="0" orient="vertical"><span class="fader-label">8 kHz</span></div>
+                        <div class="eq-fader-col"><span class="fader-val" id="simple-val-9">0 dB</span><input type="range" class="eq-fader" id="simple-band-9" data-simple-idx="9" min="-12" max="12" step="0.5" value="0" orient="vertical"><span class="fader-label">16 kHz</span></div>
+                    </div>
                 </div>
 
-                <!-- EQ Presets Bar -->
-                <div class="eq-presets-grid">
-                    <button class="eq-preset-btn active" data-eq-preset="FLAT">🎧 فابریک (Flat)</button>
-                    <button class="eq-preset-btn" data-eq-preset="BASS_BOOST">💥 شوتی بیس (Bass Max)</button>
-                    <button class="eq-preset-btn" data-eq-preset="VOCAL_BOOST">🎤 صدای خواننده (Vocal)</button>
-                    <button class="eq-preset-btn" data-eq-preset="POP_DANCE">💃 پاپ و دیسکو (Pop/Dance)</button>
-                    <button class="eq-preset-btn" data-eq-preset="ROCK">🎸 راک سنگین (Rock)</button>
-                    <button class="eq-preset-btn" data-eq-preset="HIFI">⚡ کریستالی (Hi-Fi Clarity)</button>
-                </div>
-
-                <!-- 31 Vertical Faders Scrollable Container -->
-                <div class="scroll-hint-mobile">↔️ برای مرور تمام ۳۱ باند فرکانسی، انگشت خود را به چپ و راست بکشید</div>
-                <div class="eq-faders-scroll-wrapper">
-                    <div class="eq-faders-container-31" id="eqFaders31Container">
-                        <!-- Dynamically populated 31 vertical faders -->
+                <!-- Simple Volume Mixers -->
+                <div class="processor-section">
+                    <div class="processor-title">🎵 ولوم خواننده و بی‌کلام</div>
+                    <div class="processor-grid">
+                        <div class="proc-card">
+                            <div class="proc-header"><span class="proc-label">🎤 صدای خواننده</span><span class="proc-val" id="valVocalVolSimple">100%</span></div>
+                            <input type="range" id="sliderVocalVolSimple" class="app-slider slider-cyan" min="0" max="150" value="100">
+                        </div>
+                        <div class="proc-card">
+                            <div class="proc-header"><span class="proc-label">🎸 موزیک بی‌کلام</span><span class="proc-val" id="valMusicVolSimple">100%</span></div>
+                            <input type="range" id="sliderMusicVolSimple" class="app-slider slider-purple" min="0" max="150" value="100">
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- STUDIO AUDIO PROCESSOR & MASTERING EFFECTS -->
-            <div class="processor-section">
-                <div class="processor-title">⚡ افکت‌های مسترینگ استودیویی و پردازشگر صوتی ۳.۰</div>
-                <div class="processor-grid">
-                    <!-- Studio Reverb Effect -->
-                    <div class="proc-card">
-                        <div class="proc-header">
-                            <span class="proc-label">🔊 طنین ریورب استودیویی (Studio Reverb)</span>
-                            <span class="proc-val" id="valReverb">0%</span>
-                        </div>
-                        <input type="range" id="sliderReverb" class="app-slider slider-cyan" min="0" max="100" value="0" step="1">
+            <!-- SECTION 2: PRO MASTERING DSP RACK MODE (کنسول فوق حرفه‌ای استودیو) -->
+            <div id="proModeContainer" class="mode-view-container hidden">
+                <!-- PRO 31-BAND GRAPHIC EQUALIZER -->
+                <div class="eq-section pro-rack-border">
+                    <div class="eq-header">
+                        <div class="eq-title">🎛️ اکولایزر ۳۱ بانده استودیویی (31-Band 1/3 Octave ISO EQ)</div>
+                        <button class="btn-secondary btn-reset-eq" id="btnResetEQ">🔄 بازنشانی ۳۱ باند</button>
                     </div>
 
-                    <!-- Vintage Tape Warmth & Tube Distortion -->
-                    <div class="proc-card">
-                        <div class="proc-header">
-                            <span class="proc-label">📼 گرمای آنالوگ و تیوب (Tape Warmth)</span>
-                            <span class="proc-val" id="valTapeWarmth">0%</span>
+                    <div class="scroll-hint-mobile">↔️ برای مرور تمام ۳۱ باند فرکانسی، انگشت خود را به چپ و راست بکشید</div>
+                    <div class="eq-faders-scroll-wrapper">
+                        <div class="eq-faders-container-31" id="eqFaders31Container">
+                            <!-- Dynamically populated 31 vertical faders -->
                         </div>
-                        <input type="range" id="sliderTapeWarmth" class="app-slider slider-purple" min="0" max="100" value="0" step="1">
                     </div>
+                </div>
 
-                    <!-- High-Pass Cutoff Filter (HPF) -->
-                    <div class="proc-card">
-                        <div class="proc-header">
-                            <span class="proc-label">🔪 فیلتر برش فرکانس پایین (High-Pass HPF)</span>
-                            <span class="proc-val" id="valHPF">20 Hz</span>
+                <!-- PRO DSP MASTERING RACK & EFFECTS -->
+                <div class="processor-section pro-rack-border">
+                    <div class="processor-title">⚡ پردازشگر مسترینگ، 8D Spatial Audio و افکت‌های آنالوگ</div>
+                    <div class="processor-grid">
+                        <!-- 8D Audio Spatializer Toggle -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">🎧 صدای سه‌بعدی چرخشی (8D Spatial Audio)</span>
+                                <span class="proc-val" id="val8D">غیرفعال</span>
+                            </div>
+                            <button class="btn-secondary" id="btnToggle8D" style="width:100%; margin-top:4px;">🌐 فعال‌سازی حالت 8D Audio</button>
                         </div>
-                        <input type="range" id="sliderHPF" class="app-slider slider-cyan" min="20" max="400" value="20" step="5">
-                    </div>
 
-                    <!-- Low-Pass Cutoff Filter (LPF) -->
-                    <div class="proc-card">
-                        <div class="proc-header">
-                            <span class="proc-label">🕯️ فیلتر برش فرکانس بالا (Low-Pass LPF)</span>
-                            <span class="proc-val" id="valLPF">20 kHz</span>
+                        <!-- Studio Reverb Effect -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">🔊 طنین ریورب استودیویی (Studio Reverb)</span>
+                                <span class="proc-val" id="valReverb">0%</span>
+                            </div>
+                            <input type="range" id="sliderReverb" class="app-slider slider-cyan" min="0" max="100" value="0" step="1">
                         </div>
-                        <input type="range" id="sliderLPF" class="app-slider slider-purple" min="3000" max="20000" value="20000" step="100">
-                    </div>
 
-                    <!-- Speed / Tempo Control -->
-                    <div class="proc-card">
-                        <div class="proc-header">
-                            <span class="proc-label">⏱️ سرعت پخش (Tempo Speed)</span>
-                            <span class="proc-val" id="valTempoSpeed">1.0x</span>
+                        <!-- Vintage Tape Warmth -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">📼 گرمای آنالوگ و تیوب (Tape Warmth)</span>
+                                <span class="proc-val" id="valTapeWarmth">0%</span>
+                            </div>
+                            <input type="range" id="sliderTapeWarmth" class="app-slider slider-purple" min="0" max="100" value="0" step="1">
                         </div>
-                        <input type="range" id="sliderTempoSpeed" class="app-slider slider-cyan" min="0.5" max="2.0" value="1.0" step="0.05">
-                    </div>
 
-                    <!-- Pitch Shift Control -->
-                    <div class="proc-card">
-                        <div class="proc-header">
-                            <span class="proc-label">🎵 تغییر گام موزیک (Pitch Shift)</span>
-                            <span class="proc-val" id="valPitchShift">0 Semitones</span>
+                        <!-- High-Pass Cutoff Filter (HPF) -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">🔪 فیلتر برش فرکانس پایین (High-Pass HPF)</span>
+                                <span class="proc-val" id="valHPF">20 Hz</span>
+                            </div>
+                            <input type="range" id="sliderHPF" class="app-slider slider-cyan" min="20" max="400" value="20" step="5">
                         </div>
-                        <input type="range" id="sliderPitchShift" class="app-slider slider-purple" min="-12" max="12" value="0" step="1">
-                    </div>
 
-                    <!-- Virtual Subwoofer Exciter -->
-                    <div class="proc-card">
-                        <div class="proc-header">
-                            <span class="proc-label">💥 تقویت ساب‌بیس مجازی خودرو (Sub-Bass Exciter)</span>
-                            <span class="proc-val" id="valSubBass">100%</span>
+                        <!-- Low-Pass Cutoff Filter (LPF) -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">🕯️ فیلتر برش فرکانس بالا (Low-Pass LPF)</span>
+                                <span class="proc-val" id="valLPF">20 kHz</span>
+                            </div>
+                            <input type="range" id="sliderLPF" class="app-slider slider-purple" min="3000" max="20000" value="20000" step="100">
                         </div>
-                        <input type="range" id="sliderSubBass" class="app-slider slider-cyan" min="0" max="200" value="100" step="5">
-                    </div>
 
-                    <!-- Pre-Amp Volume -->
-                    <div class="proc-card">
-                        <div class="proc-header">
-                            <span class="proc-label">🔊 ولوم پری‌امپ (Pre-Amp Gain)</span>
-                            <span class="proc-val" id="valPreAmp">0 dB</span>
+                        <!-- Speed / Tempo Control -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">⏱️ سرعت پخش (Tempo Speed)</span>
+                                <span class="proc-val" id="valTempoSpeed">1.0x</span>
+                            </div>
+                            <input type="range" id="sliderTempoSpeed" class="app-slider slider-cyan" min="0.5" max="2.0" value="1.0" step="0.05">
                         </div>
-                        <input type="range" id="sliderPreAmp" class="app-slider slider-purple" min="-6" max="12" value="0" step="0.5">
-                    </div>
 
-                    <!-- Vocal Stem Mixer -->
-                    <div class="proc-card">
-                        <div class="proc-header">
-                            <span class="proc-label">🎤 ولوم صدای خواننده (Vocals Demux)</span>
-                            <span class="proc-val" id="valVocalVol">100%</span>
+                        <!-- Pitch Shift Control -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">🎵 تغییر گام موزیک (Pitch Shift)</span>
+                                <span class="proc-val" id="valPitchShift">0 Semitones</span>
+                            </div>
+                            <input type="range" id="sliderPitchShift" class="app-slider slider-purple" min="-12" max="12" value="0" step="1">
                         </div>
-                        <input type="range" id="sliderVocalVol" class="app-slider slider-cyan" min="0" max="150" value="100">
-                    </div>
 
-                    <!-- Music Stem Mixer -->
-                    <div class="proc-card">
-                        <div class="proc-header">
-                            <span class="proc-label">🎸 ولوم موزیک بی‌کلام (Instrumental)</span>
-                            <span class="proc-val" id="valMusicVol">100%</span>
+                        <!-- Virtual Subwoofer Exciter -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">💥 تقویت ساب‌بیس مجازی خودرو (Sub-Bass Exciter)</span>
+                                <span class="proc-val" id="valSubBass">100%</span>
+                            </div>
+                            <input type="range" id="sliderSubBass" class="app-slider slider-cyan" min="0" max="200" value="100" step="5">
                         </div>
-                        <input type="range" id="sliderMusicVol" class="app-slider slider-purple" min="0" max="150" value="100">
+
+                        <!-- Pre-Amp Volume -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">🔊 ولوم پری‌امپ (Pre-Amp Gain)</span>
+                                <span class="proc-val" id="valPreAmp">0 dB</span>
+                            </div>
+                            <input type="range" id="sliderPreAmp" class="app-slider slider-purple" min="-6" max="12" value="0" step="0.5">
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- EXPORT SECTION -->
             <div class="export-section">
-                <div class="export-title">💾 دانلود خروجی اکولایزه شده ۳۱ بانده ۳.۰ (Processed WAV Export)</div>
+                <div class="export-title">💾 دانلود خروجی اکولایزه شده استودیویی (Processed WAV Export)</div>
                 <div class="export-buttons-row">
                     <button class="btn-export btn-export-eq" id="btnExportEQ">
-                        <span>🎛️</span> دانلود موزیک اکولایزه شده ۳۱ بانده (Equalized WAV)
+                        <span>🎛️</span> دانلود موزیک اکولایزه شده (Equalized WAV)
                     </button>
                     <button class="btn-export btn-export-vocals" id="btnExportVocals">
                         <span>🎤</span> دانلود صدای خواننده (Vocals Only)
