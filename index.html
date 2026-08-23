@@ -45,13 +45,23 @@
 
         <!-- Loaded Audio Studio Dashboard (Hidden Initially) -->
         <div class="card audio-info-card hidden" id="audioInfoCard">
-            <!-- Track Meta Header -->
+            <!-- Track Meta Header & Master Peak VU Meter -->
             <div class="track-header">
                 <div class="track-icon">🎧</div>
                 <div class="track-meta">
                     <div class="track-name" id="trackName">Song_Title.mp3</div>
                     <div class="track-details" id="trackDetails">44.1 kHz | 16-bit | 03:45</div>
                 </div>
+                
+                <!-- Master Peak LED & Level Meter -->
+                <div class="peak-meter-box">
+                    <div class="peak-label">PEAK LEVEL / CLIP</div>
+                    <div class="peak-bar-container">
+                        <div class="peak-bar-fill" id="peakBarFill"></div>
+                    </div>
+                    <div class="peak-value"><span id="peakValueDisplay">- infinity</span> dB <span class="clip-led" id="clipLed">CLIP</span></div>
+                </div>
+
                 <button class="btn-secondary" id="btnChangeFile">🔄 تغییر موزیک</button>
             </div>
 
@@ -152,8 +162,26 @@
 
                 <!-- PRO DSP MASTERING RACK & EFFECTS -->
                 <div class="processor-section pro-rack-border">
-                    <div class="processor-title">⚡ پردازشگر مسترینگ، 8D Spatial Audio و افکت‌های آنالوگ</div>
+                    <div class="processor-title">⚡ پردازشگر مسترینگ، True Peak Limiter، 8D Spatial Audio و افکت‌های آنالوگ</div>
                     <div class="processor-grid">
+                        <!-- True Peak Brickwall Limiter -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">🛡️ لیمیتر استودیویی (True Peak Brickwall Limiter)</span>
+                                <span class="proc-val" id="valLimiterCeiling">-0.3 dBFS</span>
+                            </div>
+                            <input type="range" id="sliderLimiterCeiling" class="app-slider slider-cyan" min="-6.0" max="0.0" value="-0.3" step="0.1">
+                        </div>
+
+                        <!-- Auto Headroom Management -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">⚖️ محافظ خودکار کلیپینگ (Auto Headroom)</span>
+                                <span class="proc-val" id="valAutoHeadroom">فعال</span>
+                            </div>
+                            <button class="btn-secondary" id="btnToggleHeadroom" style="width:100%; margin-top:4px;">🛡️ Headroom Guard: فعال</button>
+                        </div>
+
                         <!-- 8D Audio Spatializer Toggle -->
                         <div class="proc-card">
                             <div class="proc-header">
@@ -172,13 +200,22 @@
                             <input type="range" id="sliderReverb" class="app-slider slider-cyan" min="0" max="100" value="0" step="1">
                         </div>
 
-                        <!-- Vintage Tape Warmth -->
+                        <!-- Vintage Tape Warmth & Saturation Drive -->
                         <div class="proc-card">
                             <div class="proc-header">
-                                <span class="proc-label">📼 گرمای آنالوگ و تیوب (Tape Warmth)</span>
+                                <span class="proc-label">📼 گرمای آنالوگ و اشباع (Tape Saturation Drive)</span>
                                 <span class="proc-val" id="valTapeWarmth">0%</span>
                             </div>
                             <input type="range" id="sliderTapeWarmth" class="app-slider slider-purple" min="0" max="100" value="0" step="1">
+                        </div>
+
+                        <!-- Master Dynamics Compressor Threshold -->
+                        <div class="proc-card">
+                            <div class="proc-header">
+                                <span class="proc-label">🎚️ کمپرسور مسترینگ (Master Compressor Threshold)</span>
+                                <span class="proc-val" id="valCompThreshold">-12 dB</span>
+                            </div>
+                            <input type="range" id="sliderCompThreshold" class="app-slider slider-cyan" min="-40" max="0" value="-12" step="1">
                         </div>
 
                         <!-- High-Pass Cutoff Filter (HPF) -->

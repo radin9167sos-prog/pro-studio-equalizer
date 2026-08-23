@@ -347,6 +347,68 @@ body {
     font-family: var(--font-mono);
 }
 
+/* Master Peak VU Meter LED */
+.peak-meter-box {
+    background: rgba(4, 6, 15, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 6px 12px;
+    min-width: 170px;
+    text-align: center;
+}
+
+.peak-label {
+    font-size: 0.65rem;
+    font-weight: 900;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+}
+
+.peak-bar-container {
+    height: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.peak-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #00e676 0%, #00f0ff 65%, #ffea00 85%, #ff0055 100%);
+    border-radius: 4px;
+    transition: width 0.05s ease-out;
+}
+
+.peak-value {
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    color: var(--accent-gold);
+}
+
+.clip-led {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(255, 0, 85, 0.2);
+    color: #ff0055;
+    font-size: 0.65rem;
+    font-weight: 900;
+    margin-right: 4px;
+    border: 1px solid rgba(255, 0, 85, 0.4);
+    transition: all 0.15s ease;
+}
+
+.clip-led.active {
+    background: #ff0055;
+    color: #fff;
+    box-shadow: 0 0 12px #ff0055;
+}
+
 /* Visualizer Box */
 .visualizer-box {
     position: relative;
