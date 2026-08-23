@@ -304,20 +304,23 @@ class Equalizer31App {
         this.btnExportMusic.addEventListener('click', () => this.exportAudioStem('MUSIC'));
     }
 
-    initAudioContext() {
+    async initAudioContext() {
         if (!this.audioCtx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.audioCtx = new AudioContext();
+            this.setupAudioGraph();
         }
         if (this.audioCtx.state === 'suspended') {
-            this.audioCtx.resume();
+            try {
+                await this.audioCtx.resume();
+            } catch (e) {}
         }
     }
 
     // Generate Reverb Impulse Response Buffer
-    createImpulseResponse(ctx, duration = 2.0, decay = 2.0) {
+    createImpulseResponse(ctx, duration = 1.2, decay = 1.5) {
         const sampleRate = ctx.sampleRate;
-        const length = sampleRate * duration;
+        const length = Math.floor(sampleRate * duration);
         const impulse = ctx.createBuffer(2, length, sampleRate);
         const left = impulse.getChannelData(0);
         const right = impulse.getChannelData(1);
@@ -349,7 +352,7 @@ class Equalizer31App {
     }
 
     async startLiveMic() {
-        this.initAudioContext();
+        await this.initAudioContext();
         this.dropZone.classList.add('hidden');
         this.audioInfoCard.classList.remove('hidden');
 
@@ -363,7 +366,6 @@ class Equalizer31App {
             this.btnToggleMic.innerText = '🎙️ میکروفون: فعال';
             this.btnToggleMic.style.borderColor = '#00f0ff';
 
-            this.setupAudioGraph();
             this.micSource.connect(this.preAmpNode);
             this.isPlaying = true;
             this.renderVisualizer();
@@ -387,7 +389,7 @@ class Equalizer31App {
     }
 
     async handleFile(file) {
-        this.initAudioContext();
+        await this.initAudioContext();
         this.stopPlayback();
 
         this.fileName = file.name.replace(/\.[^/.]+$/, "");
@@ -507,8 +509,10 @@ class Equalizer31App {
         if (this.musicSource) this.musicSource.playbackRate.value = combinedRate;
     }
 
-    // Setup Master Audio Graph
+    // Setup Master Persistent Audio Graph
     setupAudioGraph() {
+        if (!this.audioCtx) return;
+
         // Pre-Amp Node
         this.preAmpNode = this.audioCtx.createGain();
         this.preAmpNode.gain.value = Math.pow(10, this.preAmpGainDb / 20);
@@ -532,15 +536,15 @@ class Equalizer31App {
 
         // Studio Reverb Convolver Node
         this.reverbNode = this.audioCtx.createConvolver();
-        this.reverbNode.buffer = this.createImpulseResponse(this.audioCtx, 2.0, 2.0);
+        this.reverbNode.buffer = this.createImpulseResponse(this.audioCtx, 1.2, 1.5);
 
         this.reverbGainNode = this.audioCtx.createGain();
         this.reverbGainNode.gain.value = this.reverbLevel / 100;
 
-        // Tape Warmth WaveShaper Node
+        // Tape Warmth WaveShaper Node (Optimized oversampling for mobile)
         this.tapeNode = this.audioCtx.createWaveShaper();
         this.tapeNode.curve = this.createDistortionCurve(this.tapeWarmthLevel);
-        this.tapeNode.oversample = '4x';
+        this.tapeNode.oversample = 'none';
 
         // Dynamic Compressor Node
         this.compressorNode = this.audioCtx.createDynamicsCompressor();
@@ -590,20 +594,18 @@ class Equalizer31App {
         this.analyser.connect(this.audioCtx.destination);
     }
 
-    togglePlayPause() {
+    async togglePlayPause() {
         if (!this.rawAudioBuffer) return;
         if (this.isPlaying) {
             this.pausePlayback();
         } else {
-            this.startPlayback(this.pauseOffset);
+            await this.startPlayback(this.pauseOffset);
         }
     }
 
-    startPlayback(offset = 0) {
-        this.initAudioContext();
-        if (this.isPlaying) this.stopPlaybackNodes();
-
-        this.setupAudioGraph();
+    async startPlayback(offset = 0) {
+        await this.initAudioContext();
+        this.stopPlaybackNodes();
 
         this.vocalSource = this.audioCtx.createBufferSource();
         this.musicSource = this.audioCtx.createBufferSource();
