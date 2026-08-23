@@ -108,7 +108,13 @@ body {
     margin-bottom: 12px;
 }
 
-.logo-icon { font-size: 1.1rem; }
+.header-app-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
 .logo-title {
     font-size: 0.85rem;
     font-weight: 900;
