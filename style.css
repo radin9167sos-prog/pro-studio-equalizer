@@ -430,6 +430,15 @@ body {
     box-shadow: 0 0 15px rgba(0, 240, 255, 0.35);
 }
 
+.scroll-hint-mobile {
+    font-size: 0.75rem;
+    color: var(--accent-gold);
+    text-align: center;
+    margin-bottom: 8px;
+    font-weight: 700;
+    display: none;
+}
+
 /* 31 Vertical Faders Scroll Wrapper */
 .eq-faders-scroll-wrapper {
     overflow-x: auto;
@@ -604,3 +613,157 @@ footer {
     color: var(--text-muted);
     margin-top: 10px;
 }
+
+/*
+ * ===================================================================
+ * MOBILE & TABLET RESPONSIVE ENGINE (TOUCH OPTIMIZATION)
+ * ===================================================================
+ */
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px 8px;
+    }
+
+    .app-container {
+        gap: 14px;
+    }
+
+    .app-header h1 {
+        font-size: 1.45rem;
+    }
+
+    .subtitle {
+        font-size: 0.82rem;
+    }
+
+    .card {
+        padding: 16px 14px;
+        border-radius: 18px;
+    }
+
+    .drop-card {
+        padding: 32px 14px;
+    }
+
+    .drop-icon-pulse {
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+    }
+
+    .drop-title {
+        font-size: 1.05rem;
+    }
+
+    .drop-sub {
+        font-size: 0.8rem;
+        margin-bottom: 16px;
+    }
+
+    .track-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+
+    .track-icon {
+        padding: 8px 12px;
+        font-size: 1.5rem;
+    }
+
+    .track-name {
+        font-size: 1.0rem;
+    }
+
+    #spectrumCanvas {
+        height: 130px;
+    }
+
+    .vis-mode-selector {
+        position: relative;
+        top: 0; left: 0;
+        justify-content: center;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.4);
+    }
+
+    .player-controls-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-play {
+        width: 100%;
+        padding: 14px 20px;
+    }
+
+    .eq-presets-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+
+    .eq-preset-btn {
+        padding: 8px 4px;
+        font-size: 0.72rem;
+    }
+
+    .eq-faders-scroll-wrapper {
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+        padding-bottom: 14px;
+    }
+
+    .eq-faders-container-31 {
+        padding: 14px 10px;
+        min-width: 980px;
+        gap: 6px;
+    }
+
+    .eq-fader {
+        height: 120px;
+        width: 22px;
+    }
+
+    .fader-val {
+        font-size: 0.65rem;
+    }
+
+    .fader-label {
+        font-size: 0.65rem;
+    }
+
+    .processor-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .export-buttons-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .btn-export {
+        width: 100%;
+        padding: 14px 16px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .logo-badge {
+        padding: 4px 12px;
+    }
+
+    .logo-title {
+        font-size: 0.72rem;
+    }
+
+    .eq-presets-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
